@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5efe7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Provador">
+<title>Meu Provador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5efe7;--card:#fffdf9;--ink:#2a2220;--mut:#8b7e75;--line:#e7dccf;
+  --acc:#9b4a37;--acc2:#f0e1d5;--ok:#3d7a4e;--okbg:#e2efe3;--warn:#a8741a;--warnbg:#f7ebd3;
+  --bad:#a8423d;--badbg:#f6e0dc;--r:16px;
+  --serif:'Fraunces',Georgia,'Times New Roman',serif;--sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+#app{max-width:600px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+h1{font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:-.5px;margin:4px 0 2px}
+h2{font-family:var(--serif);font-weight:600;font-size:20px;margin:22px 0 10px}
+.sub{color:var(--mut);margin:0 0 16px}
+.lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700;margin:16px 0 8px}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;white-space:nowrap;font-size:14px;transition:.15s}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip small{opacity:.6;font-size:11px;margin-left:3px}
+.seg{display:flex;background:var(--acc2);border-radius:14px;padding:4px;margin:18px 0 14px}
+.seg button{flex:1;padding:10px;border-radius:11px;font-weight:500;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px #0001}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:11px 15px;font-weight:500;background:var(--card);border:1px solid var(--line)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.acc{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn.sm{padding:8px 11px;font-size:13.5px;border-radius:10px}
+.btn.full{width:100%}
+a.btn{text-decoration:none;color:inherit}
+.btn.danger{color:var(--bad)}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.mut{color:var(--mut)}
+.small{font-size:13px}
+/* thumbs */
+.th{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:#eee;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid #0000000d}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th .em{filter:drop-shadow(0 1px 2px #0003)}
+.th.est::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,#ffffff55 0 6px,transparent 6px 14px)}
+.th .dot{position:absolute;right:6px;bottom:6px;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0002}
+/* grid armário */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pc{text-align:left}
+.pc .nm{font-size:13px;font-weight:500;margin-top:5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc .mt{font-size:11.5px;color:var(--mut)}
+/* look */
+.look{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:14px}
+.mos{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.mos .it .cap{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nota{display:flex;align-items:center;gap:10px;margin:12px 0 6px}
+.badge{font-family:var(--serif);font-weight:700;font-size:18px;min-width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.badge.g{background:var(--okbg);color:var(--ok)}.badge.y{background:var(--warnbg);color:var(--warn)}.badge.r{background:var(--badbg);color:var(--bad)}
+.nota b{font-family:var(--serif);font-size:18px;font-weight:600}
+.why{list-style:none;padding:0;margin:6px 0 10px;font-size:13.5px}
+.why li{padding:3px 0 3px 22px;position:relative}
+.why li::before{position:absolute;left:0;top:3px;font-weight:700}
+.why .p::before{content:"✓";color:var(--ok)}
+.why .c::before{content:"!";color:var(--warn);left:5px}
+.why .d::before{content:"💡";font-size:12px}
+.acts{display:flex;gap:7px;flex-wrap:wrap}
+.tag{display:inline-block;font-size:11.5px;background:var(--acc2);color:var(--acc);border-radius:999px;padding:3px 9px;margin-right:4px}
+/* slots */
+.slot{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:14px;margin-bottom:8px;width:100%;text-align:left}
+.slot .th{width:52px;flex:none;font-size:22px}
+.slot .ph{width:52px;aspect-ratio:3/4;border:1.5px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.7;flex:none}
+.slot .x{width:32px;height:32px;border-radius:50%;background:var(--bg);font-size:16px;color:var(--mut)}
+.ou{text-align:center;font-size:12px;color:var(--mut);margin:-2px 0 6px;letter-spacing:.1em}
+/* picker */
+.op{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:8px;border-radius:14px;border:1px solid transparent}
+.op:active{background:var(--bg)}
+.op .th{width:54px;flex:none;font-size:22px}
+.op.dim{opacity:.55}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;display:inline-block;margin-top:3px}
+.pill.g{background:var(--okbg);color:var(--ok)}.pill.y{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}.pill.n{background:var(--bg);color:var(--mut)}
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:#fffdf9ee;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:20}
+nav .in{display:flex;max-width:600px;width:100%}
+nav button{flex:1;padding:9px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--mut)}
+nav button span{font-size:21px;filter:grayscale(1);opacity:.7}
+nav button.on{color:var(--ink);font-weight:700}
+nav button.on span{filter:none;opacity:1}
+.fab{position:fixed;right:max(18px,calc(50% - 282px));bottom:calc(78px + env(safe-area-inset-bottom));background:var(--acc);color:#fff;border-radius:999px;padding:14px 20px;font-weight:700;box-shadow:0 6px 20px #9b4a3755;z-index:15}
+/* sheet */
+.sbg{position:fixed;inset:0;background:#2a222066;z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fd .15s}
+.sheet{background:var(--bg);width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:10px 16px calc(24px + env(safe-area-inset-bottom));animation:up .22s cubic-bezier(.2,.8,.3,1)}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.sheet h2{margin-top:6px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fd{from{opacity:0}}
+.field{margin-bottom:14px}
+.inp{width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none}
+.inp:focus{border-color:var(--ink)}
+.fotobox{display:flex;align-items:center;gap:14px;cursor:pointer}
+.fotobox .th{width:92px;flex:none;font-size:34px}
+.fotobtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fotobtns label{cursor:pointer}
+.cores{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:8px}
+.cor{aspect-ratio:1;border-radius:50%;border:1px solid #0002;position:relative}
+.cor.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.cor.mais{display:flex;align-items:center;justify-content:center;background:conic-gradient(#e44,#ec4,#4c6,#4ae,#a4e,#e44);color:#fff;font-weight:700;overflow:hidden}
+.cor.mais input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.range{width:100%;accent-color:var(--acc)}
+.toggle{display:flex;align-items:center;gap:10px;padding:10px 0}
+.sw{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:.2s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px #0003}
+.sw.on{background:var(--ok)}.sw.on::after{left:21px}
+.empty{text-align:center;padding:30px 14px}
+.empty .big{font-size:46px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;z-index:60;font-size:14px;animation:up .2s;max-width:90vw;text-align:center}
+.hist{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.hist .ths{display:flex;gap:4px}.hist .th{width:30px;font-size:13px;border-radius:7px}
+.status{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.status i{width:9px;height:9px;border-radius:50%;background:var(--warn);display:inline-block}
+.status i.ok{background:var(--ok)}
+textarea.inp{min-height:110px;font-size:12px;font-family:ui-monospace,monospace}
+details summary{cursor:pointer;font-weight:500;padding:6px 0}
+.explica p{margin:6px 0;font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav><div class="in" id="nav"></div></nav>
+<div id="layer"></div>
+<script>
+'use strict';
+/* ================= CONSTANTES ================= */
+const TIPOS=[
+ {id:'cima',nome:'Parte de cima',em:'👚',ex:'blusa, camisa, camiseta, cropped'},
+ {id:'baixo',nome:'Parte de baixo',em:'👖',ex:'calça, saia, short, bermuda'},
+ {id:'inteira',nome:'Peça única',em:'👗',ex:'vestido, macacão, jardineira'},
+ {id:'terceira',nome:'Terceira peça',em:'🧥',ex:'blazer, casaco, cardigã, jaqueta, colete'},
+ {id:'calcado',nome:'Calçado',em:'👠',ex:'tênis, sandália, bota, scarpin'},
+ {id:'bolsa',nome:'Bolsa',em:'👜',ex:'bolsa, mochila, clutch'},
+ {id:'acessorio',nome:'Acessório',em:'💍',ex:'colar, brinco, cinto, lenço, óculos'}];
+const TIPO=Object.fromEntries(TIPOS.map(t=>[t.id,t]));
+const ORDEM={cima:1,inteira:1,baixo:2,terceira:3,calcado:4,bolsa:5,acessorio:6};
+const ESTACOES=[{id:'primavera',nome:'Primavera',em:'🌸'},{id:'verao',nome:'Verão',em:'☀️'},{id:'outono',nome:'Outono',em:'🍂'},{id:'inverno',nome:'Inverno',em:'❄️'}];
+const ESTILOS_BASE=[
+ {id:'casual',nome:'Casual',em:'☕',min:1,max:3},
+ {id:'trabalho',nome:'Trabalho',em:'💼',min:3,max:4},
+ {id:'elegante',nome:'Elegante',em:'✨',min:4,max:5},
+ {id:'romantico',nome:'Romântico',em:'🌷',min:2,max:4},
+ {id:'esportivo',nome:'Esportivo',em:'👟',min:1,max:2},
+ {id:'festa',nome:'Festa / noite',em:'🥂',min:3,max:5},
+ {id:'praia',nome:'Praia',em:'🏖️',min:1,max:2}];
+const FORMAL=['','Bem à vontade','Casual','Arrumadinha','Social','Gala'];
+const CALOR=['','Leve','Média','Quente'];
+const CORES=[
+ ['Preto','#1d1c1c',1],['Branco','#fbfbf8',1],['Off-white','#efe7d8',1],['Cinza','#9b9b9b',1],['Grafite','#4b4b4d',1],
+ ['Bege','#d8c3a2',1],['Nude','#e2bea6',1],['Caramelo','#ad7845',1],['Marrom','#674530',1],
+ ['Jeans claro','#8eaecf',1],['Jeans escuro','#2f496b',1],['Azul-marinho','#1f2b46',1],['Dourado','#c9a64a',1],['Prata','#c4c6c9',1],
+ ['Vermelho','#c2282e',0],['Vinho','#6d1f2f',0],['Rosa claro','#f2b9c7',0],['Pink','#d6397b',0],['Coral','#ee7f6b',0],
+ ['Laranja','#e47b2c',0],['Terracota','#b4563a',0],['Amarelo','#ebc535',0],['Mostarda','#c79a2c',0],
+ ['Verde-oliva','#6a7040',0],['Verde','#3e8e59',0],['Verde-água','#80c7b7',0],['Azul-claro','#9cc3e6',0],
+ ['Azul royal','#2a50b8',0],['Lilás','#b9a2d6',0],['Roxo','#5c3a89',0]];
+
+/* ================= ESTADO ================= */
+const PODE_BAIXAR=/github\.io$|localhost/.test(location.hostname);
+const VERSAO='1.1 · 16/nov';
+const LS='provador-v1';
+let S={pecas:[],looks:[],hist:[],cfg:{estacaoAuto:true,estilosExtra:[]}};
+try{const raw=localStorage.getItem(LS); if(raw){const o=JSON.parse(raw); S={...S,...o,cfg:{...S.cfg,...(o.cfg||{})}}}}catch(e){}
+const FOTOS={}; // id -> dataURL (fotos guardadas só no aparelho)
+let DB=null,UID=null,ASSETS=null,COL=null,META=null,nuvem='conectando';
+const M={tab:'montar',estacao:null,estilo:null,modo:'sugestoes',sug:null,evitar:new Set(),escolha:{},filtroTipo:'todas',filtroEst:'todas',busca:''};
+
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+function hoje(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function diasEntre(a,b){return Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5)}
+function fmtData(s){const d=diasEntre(s,hoje()); if(d===0)return'Hoje'; if(d===1)return'Ontem'; const [y,m,dd]=s.split('-'); return `${dd}/${m}`+(y!=String(new Date().getFullYear())?'/'+y:'')}
+function toast(t){const el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
+function estacaoAtual(){const d=new Date(),md=(d.getMonth()+1)*100+d.getDate();if(md>=1221||md<321)return'verao';if(md<621)return'outono';if(md<923)return'inverno';return'primavera'}
+function estilos(){return[...ESTILOS_BASE,...(S.cfg.estilosExtra||[])]}
+function estiloPorId(id){return estilos().find(e=>e.id===id)}
+function estacaoPorId(id){return ESTACOES.find(e=>e.id===id)}
+function peca(id){return S.pecas.find(p=>p.id===id)}
+function hexToHsl(hex){let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return{h,s,l}}
+const _ci=new Map();
+function corInfo(p){const k=p.cor+'|'+p.corNome+'|'+p.neutro;if(_ci.has(k))return _ci.get(k);const hsl=hexToHsl(p.cor||'#999999');const preset=CORES.find(c=>c[0]===p.corNome);let neutro=preset?!!preset[2]:(p.neutro!=null?!!p.neutro:(hsl.s<.18||hsl.l>.93||hsl.l<.12));const o={...hsl,neutro,nome:(p.corNome||'cor').toLowerCase(),hex:p.cor};_ci.set(k,o);return o}
+function hueDist(a,b){const d=Math.abs(a-b)%360;return d>180?360-d:d}
+function claro(hex){return hexToHsl(hex).l>.62}
+
+/* ================= MOTOR DE COMBINAÇÃO ================= */
+function pecasDoContexto(ctx){
+  const st=estiloPorId(ctx.estilo);
+  return S.pecas.filter(p=>noContexto(p,ctx,st)===true);
+}
+function noContexto(p,ctx,st=estiloPorId(ctx.estilo)){
+  if(p.estacoes&&p.estacoes.length&&!p.estacoes.includes(ctx.estacao)) return 'Não é peça de '+estacaoPorId(ctx.estacao).nome.toLowerCase();
+  if(!st) return true;
+  if(p.estilos&&p.estilos.includes(st.id)) return true;
+  if(p.coringa||!p.estilos||!p.estilos.length){const f=+p.formal||3;if(f>=st.min-1&&f<=st.max+1)return true;return 'Nível de arrumação diferente de '+st.nome}
+  return 'Não está marcada como '+st.nome;
+}
+function diasDesdeUso(pcs){
+  const ids=new Set(pcs.map(p=>p.id));let melhor=null;
+  for(const h of S.hist){if(h.pcs.some(i=>ids.has(i))){const d=diasEntre(h.data,hoje());if(d>=0&&(melhor===null||d<melhor))melhor=d}}
+  return melhor;
+}
+function harmonia(pcs){
+  const pros=[],cons=[],dicas=[];let d=0;
+  const roupaT=['cima','baixo','inteira','terceira'];
+  const vivas=pcs.filter(p=>!corInfo(p).neutro);
+  const fams=[];
+  for(const p of vivas){const c=corInfo(p);const f=fams.find(f=>hueDist(f.h,c.h)<=22);if(f)f.pcs.push(p);else fams.push({h:c.h,l:c.l,s:c.s,nome:c.nome,pcs:[p]})}
+  const n=fams.length;
+  const suave=f=>f.l>=.74||f.l<=.27||f.s<.3;
+  if(n===0){d+=5;pros.push('Base neutra: elegante e fácil de acertar');if(pcs.length>=3)dicas.push('Um calçado, bolsa ou acessório colorido daria um ponto de luz')}
+  else if(n===1){const f=fams[0];if(f.pcs.length>=2){d+=10;pros.push(`Tom sobre tom em ${f.nome}`)}else{d+=9;pros.push(`Um ponto de cor (${f.nome}) sobre neutros — equilíbrio clássico`)}}
+  else if(n===2){const[a,b]=fams;const dist=hueDist(a.h,b.h);
+    if(dist<=55){d+=8;pros.push(`Cores vizinhas: ${a.nome} e ${b.nome} conversam entre si`)}
+    else if(dist>=145){d+=7;pros.push(`Cores complementares: ${a.nome} e ${b.nome} criam um contraste bonito`)}
+    else if(dist>=100){d+=1;pros.push(`Contraste de ${a.nome} com ${b.nome} — look com personalidade`)}
+    else if(suave(a)||suave(b)){d-=6;cons.push(`${cap(a.nome)} e ${b.nome} não são cores parentes, mas o tom suave segura`)}
+    else return{rejeita:`${cap(a.nome)} com ${b.nome}: cores que brigam`};
+  }else if(n===3){const hs=fams.map(f=>f.h);const pares=[hueDist(hs[0],hs[1]),hueDist(hs[0],hs[2]),hueDist(hs[1],hs[2])];
+    if(Math.max(...pares)<=75){d+=4;pros.push('Cores vizinhas em degradê')}
+    else if(Math.min(...pares)>=95&&fams.some(suave)){d-=8;cons.push('Três cores: ousado — o resto precisa ficar neutro')}
+    else return{rejeita:'Cores demais competindo entre si'};
+  }else return{rejeita:'Cores demais ao mesmo tempo'};
+  // eco de cor: calçado/bolsa/acessório repetindo a cor da roupa
+  let eco=false;
+  for(const f of fams){const r=f.pcs.filter(p=>roupaT.includes(p.tipo)),c=f.pcs.filter(p=>!roupaT.includes(p.tipo));
+    if(r.length&&c.length&&!eco){eco=true;d+=5;pros.push(`${cap(c[0].nome)} repete o ${f.nome} da roupa`)}}
+  const cal=pcs.find(p=>p.tipo==='calcado'),bol=pcs.find(p=>p.tipo==='bolsa');
+  if(cal&&bol){const a=corInfo(cal),b=corInfo(bol);if(a.nome===b.nome||(!a.neutro&&!b.neutro&&hueDist(a.h,b.h)<=22)||(a.neutro&&b.neutro&&Math.abs(a.l-b.l)<.12)){d+=3;pros.push('Calçado e bolsa conversam')}}
+  return{delta:d,pros,cons,dicas};
+}
+function avaliar(lista,ctx,completo=true){
+  const pcs=lista.filter(Boolean);
+  const pros=[],cons=[],dicas=[];let s=70;
+  const tem=t=>pcs.filter(p=>p.tipo===t);
+  const faltas=[];
+  if(!tem('inteira').length){
+    if(!tem('cima').length&&!tem('baixo').length)faltas.push('parte de cima e de baixo (ou peça única)');
+    else if(!tem('cima').length)faltas.push('parte de cima');
+    else if(!tem('baixo').length)faltas.push('parte de baixo');
+  }
+  if(!tem('calcado').length)faltas.push('calçado');
+  if(completo&&faltas.length)return{ok:false,motivo:'Falta '+faltas.join(' e '),faltas};
+  if(pcs.length<2)return{ok:true,score:null,pros,cons,dicas,faltas};
+  const est=pcs.filter(p=>p.padrao==='estampa'&&p.tipo!=='acessorio');
+  if(est.length>1)return{ok:false,motivo:`Duas estampas disputando atenção (${est.map(p=>p.nome).join(' + ')})`,faltas};
+  const fps=pcs.filter(p=>p.tipo!=='acessorio');
+  const fs=fps.map(p=>+p.formal||3);
+  const mn=Math.min(...fs),mx=Math.max(...fs);
+  if(fps.length>=2&&mx-mn>=3){const a=fps[fs.indexOf(mn)],b=fps[fs.indexOf(mx)];return{ok:false,motivo:`${a.nome} (${FORMAL[mn].toLowerCase()}) não acompanha ${b.nome} (${FORMAL[mx].toLowerCase()})`,faltas}}
+  if(fps.length>=2){if(mx-mn===2){s-=12;cons.push('Mistura peça bem casual com peça bem arrumada — só funciona se for proposital')}else{s+=6;pros.push('Peças no mesmo nível de arrumação')}}
+  const st=estiloPorId(ctx.estilo);
+  if(st&&fs.length){const avg=fs.reduce((a,b)=>a+b,0)/fs.length;if(avg<st.min-.5){s-=14;cons.push(`Um pouco informal para ${st.nome}`)}else if(avg>st.max+.5){s-=14;cons.push(`Arrumado demais para ${st.nome}`)}
+    const marc=fps.filter(p=>(p.estilos||[]).includes(st.id)).length;
+    if(fps.length>=2){if(marc/fps.length>=.5){s+=3;pros.push(`Peças com a cara de ${st.nome}`)}else if(marc===0){s-=10;cons.push(`Nenhuma peça é típica de ${st.nome} — look genérico`)}else{s-=5}}}
+  const h=harmonia(pcs);
+  if(h.rejeita)return{ok:false,motivo:h.rejeita,faltas};
+  s+=h.delta;pros.push(...h.pros);cons.push(...h.cons);dicas.push(...h.dicas);
+  if(est.length===1){const e=est[0],ce=corInfo(e);const outras=pcs.filter(p=>p!==e&&p.tipo!=='acessorio'&&!corInfo(p).neutro);
+    if(!outras.length){s+=6;pros.push(`A estampa (${e.nome}) é a protagonista; o resto acompanha`)}
+    else if(!ce.neutro&&outras.every(p=>hueDist(corInfo(p).h,ce.h)<=25)){s+=6;pros.push('As outras peças repetem a cor da estampa')}
+    else{s-=6;cons.push('Estampa + peça colorida: cuidado para não pesar')}}
+  const roupas=pcs.filter(p=>['cima','baixo','inteira','terceira'].includes(p.tipo));
+  if(ctx.estacao==='inverno'){if(tem('terceira').length||roupas.some(p=>+p.calor===3)){s+=4;pros.push('Quentinho para o frio')}else if(roupas.length){s-=10;cons.push('Está frio: uma terceira peça ou algo mais quente cairia bem')}}
+  else if(ctx.estacao==='verao'){if(roupas.some(p=>+p.calor===3)){s-=12;cons.push('Tem peça quente demais para o verão')}else if(roupas.length&&tem('terceira').length===0){s+=3;pros.push('Leve para o calor')}}
+  if(tem('terceira').length&&ctx.estacao!=='inverno'){s+=4;pros.push('A terceira peça dá acabamento ao look')}
+  const rec=diasDesdeUso(pcs.filter(p=>['cima','baixo','inteira'].includes(p.tipo)));
+  if(rec!==null&&rec<=2){s-=8;cons.push(rec===0?'Uma dessas peças já foi usada hoje':`Uma dessas peças foi usada há ${rec} dia${rec>1?'s':''}`)}
+  return{ok:true,score:Math.max(0,Math.min(100,Math.round(s))),pros,cons,dicas,faltas};
+}
+function gerar(ctx,fixos={},n=6,jitter=0,evitar=new Set()){
+  const disp=pecasDoContexto(ctx);
+  const L=t=>fixos[t]?[peca(fixos[t])].filter(Boolean):disp.filter(p=>p.tipo===t);
+  const tops=L('cima'),bots=L('baixo'),vest=L('inteira'),shoes=L('calcado'),lays=L('terceira'),bags=L('bolsa'),accs=L('acessorio');
+  let bases=[];
+  if(!fixos.inteira)for(const t of tops)for(const b of bots)bases.push([t,b]);
+  if(!fixos.cima&&!fixos.baixo)for(const v of vest)bases.push([v]);
+  const faltam=[];
+  if(!bases.length)faltam.push(fixos.cima?'parte de baixo':fixos.baixo?'parte de cima':'parte de cima + parte de baixo (ou vestido/macacão)');
+  if(!shoes.length)faltam.push('calçado');
+  if(faltam.length)return{erro:'faltam',faltam};
+  const ev=p=>avaliar(p,ctx,false),by=(a,b)=>b.r.score-a.r.score;
+  bases=bases.map(b=>({b,r:ev(b)})).filter(x=>x.r.ok).sort(by).slice(0,40);
+  if(!bases.length)return{erro:'nada',motivo:'As peças desse estilo e estação não combinam entre si. Cadastre mais opções (de preferência neutras).'};
+  const cands=new Map();
+  for(const{b}of bases){
+    const sh=shoes.map(s=>({p:s,r:ev([...b,s])})).filter(x=>x.r.ok).sort(by).slice(0,2);
+    const lyOpts=fixos.terceira?[peca(fixos.terceira)]:[null,...lays.map(l=>({p:l,r:ev([...b,l])})).filter(x=>x.r.ok).sort(by).slice(0,2).map(x=>x.p)];
+    for(const s of sh)for(const ly of lyOpts){
+      const pcs=[...b,s.p];if(ly)pcs.push(ly);
+      const melhor=(list,fixo)=>{if(fixo)return peca(fixo);let best=null,bs=-1;for(const x of list){const r=ev([...pcs,x]);if(r.ok&&r.score>bs){bs=r.score;best=x}}return best};
+      const bag=melhor(bags,fixos.bolsa);if(bag)pcs.push(bag);
+      const r0=avaliar(pcs,ctx,true);
+      const ac=melhor(accs,fixos.acessorio);
+      if(ac){const r2=avaliar([...pcs,ac],ctx,true);if(r2.ok&&(fixos.acessorio||!r0.ok||r2.score>=r0.score))pcs.push(ac)}
+      const r=avaliar(pcs,ctx,true);
+      if(r.ok){const key=pcs.map(p=>p.id).sort().join('|');if(!cands.has(key))cands.set(key,{pcs:ordenar(pcs),r,key,rank:r.score+Math.random()*jitter})}
+    }
+  }
+  const lista=[...cands.values()].sort((a,b)=>b.rank-a.rank);
+  if(!lista.length)return{erro:'nada',motivo:'Não encontrei calçado que combine com essas peças nesse estilo.'};
+  const MIN=62,picked=[],uso={},bases_=new Set();
+  const boas=lista.filter(c=>!evitar.has(c.key)&&(c.r.score>=MIN||n===1));
+  const mainKey=c=>c.pcs.filter(p=>['cima','baixo','inteira'].includes(p.tipo)).map(p=>p.id).sort().join('|');
+  for(const pass of[0,1]){
+    for(const c of boas){
+      if(picked.length>=n)break;
+      if(picked.includes(c))continue;
+      const main=c.pcs.filter(p=>['cima','baixo','inteira'].includes(p.tipo)),mk=mainKey(c);
+      if(n>1&&pass===0&&(bases_.has(mk)||main.some(p=>(uso[p.id]||0)>=2)))continue;
+      picked.push(c);bases_.add(mk);main.forEach(p=>uso[p.id]=(uso[p.id]||0)+1);
+    }
+  }
+  if(!picked.length&&!lista.some(c=>!evitar.has(c.key)))return{erro:'acabou'};
+  if(!picked.length)return{erro:'nada',motivo:'As combinações possíveis ficaram fracas para esse estilo. Cadastre mais peças marcadas com ele.'};
+  picked.sort((a,b)=>b.r.score-a.r.score);
+  return{looks:picked,total:boas.length+[...evitar].length};
+}
+const ordenar=pcs=>[...pcs].sort((a,b)=>ORDEM[a.tipo]-ORDEM[b.tipo]);
+function nivel(r){if(!r||!r.ok)return['r','Não combina'];if(r.score==null)return['n','—'];if(r.score>=85)return['g','Combina muito'];if(r.score>=70)return['g','Combina'];if(r.score>=55)return['y','Dá pra usar'];return['y','Arriscado']}
+
+/* ================= PERSISTÊNCIA ================= */
+function salvarLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+const filas={};
+function remoto(chave,fn){if(!DB)return;filas[chave]=(filas[chave]||Promise.resolve()).then(fn).catch(e=>{console.warn(e);if(e&&e.code==='quota_exceeded')toast('O espaço na nuvem encheu');else if(e&&e.code==='unavailable')setTimeout(()=>remoto(chave,fn),1500+Math.random()*1500)})}
+const limpo=o=>JSON.parse(JSON.stringify(o));
+function putPeca(p){const i=S.pecas.findIndex(x=>x.id===p.id);if(i>=0)S.pecas[i]=p;else S.pecas.push(p);_ci.clear();salvarLocal();remoto('p'+p.id,()=>COL.pecas.doc(p.id).set(limpo(p)))}
+function delPeca(id){S.pecas=S.pecas.filter(p=>p.id!==id);salvarLocal();delFotoLocal(id);remoto('p'+id,()=>COL.pecas.doc(id).delete());for(const k in M.escolha)if(M.escolha[k]===id)delete M.escolha[k];M.sug=null}
+function putLook(l){const i=S.looks.findIndex(x=>x.id===l.id);if(i>=0)S.looks[i]=l;else S.looks.unshift(l);salvarLocal();remoto('l'+l.id,()=>COL.looks.doc(l.id).set(limpo(l)))}
+function delLook(id){S.looks=S.looks.filter(l=>l.id!==id);salvarLocal();remoto('l'+id,()=>COL.looks.doc(id).delete())}
+function putMeta(){S.hist=S.hist.slice(0,300);salvarLocal();remoto('meta',()=>META.set(limpo({hist:S.hist,cfg:S.cfg})))}
+
+/* fotos guardadas no aparelho (quando a nuvem não está disponível) */
+let idb=null;
+function abrirIDB(){return new Promise(res=>{try{const r=indexedDB.open('provador',1);r.onupgradeneeded=()=>r.result.createObjectStore('fotos');r.onsuccess=()=>{idb=r.result;res(idb)};r.onerror=()=>res(null)}catch(e){res(null)}})}
+function idbAll(){return new Promise(res=>{if(!idb)return res();try{const tx=idb.transaction('fotos'),st=tx.objectStore('fotos'),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){FOTOS[c.key]=c.value;c.continue()}else res()};rq.onerror=()=>res()}catch(e){res()}})}
+function putFotoLocal(id,data){FOTOS[id]=data;try{idb&&idb.transaction('fotos','readwrite').objectStore('fotos').put(data,id)}catch(e){}}
+function delFotoLocal(id){delete FOTOS[id];try{idb&&idb.transaction('fotos','readwrite').objectStore('fotos').delete(id)}catch(e){}}
+function fotoURL(p){if(p.fotoAsset)return'/_blob/'+p.fotoAsset;if(p.fotoLink)return p.fotoLink;if(FOTOS[p.id])return FOTOS[p.id];return null}
+
+async function conectar(){
+  try{
+    if(!window.claude||!window.claude.use){nuvem='off';render();return}
+    const [db,user,assets]=await Promise.all([claude.use('db'),claude.use('user'),claude.use('assets').catch(()=>null)]);
+    ASSETS=assets||null;
+    if(!db||!user){nuvem='off';render();return}
+    const id=await user.id();
+    if(!id){nuvem='off';render();return}
+    DB=db;UID=id;
+    const base=db.doc('data/users/'+id+'/armario');
+    COL={pecas:base.collection('pecas'),looks:base.collection('looks')};
+    META=base.collection('meta').doc('geral');
+    const timer=setTimeout(()=>{if(nuvem==='conectando'){nuvem='lento';render()}},10000);
+    // primeira vez na nuvem: leva o que já existe neste aparelho
+    const[ps,ls,mt]=await Promise.all([COL.pecas.get(),COL.looks.get(),META.get()]);
+    if(ps.empty&&ls.empty&&!mt.exists&&(S.pecas.length||S.looks.length||S.hist.length)){
+      for(const p of S.pecas)await COL.pecas.doc(p.id).set(limpo(p));
+      for(const l of S.looks)await COL.looks.doc(l.id).set(limpo(l));
+      await META.set(limpo({hist:S.hist,cfg:S.cfg}));
+    }
+    const fim=()=>{clearTimeout(timer);if(nuvem!=='ok'){nuvem='ok';render()}};
+    const erro=e=>{clearTimeout(timer);console.warn(e);nuvem='erro';render()};
+    COL.pecas.onSnapshot(snap=>{S.pecas=snap.docs.map(d=>({...d.data(),id:d.id}));_ci.clear();salvarLocal();if(!snap.metadata.fromCache)fim();render(true)},erro);
+    COL.looks.onSnapshot(snap=>{S.looks=snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.criado||'').localeCompare(a.criado||''));salvarLocal();render(true)},erro);
+    META.onSnapshot(d=>{if(d.exists){const o=d.data();S.hist=[...(o.hist||[])];S.cfg={...S.cfg,...(o.cfg||{})};salvarLocal();render(true)}},erro);
+  }catch(e){console.warn(e);nuvem='off';render()}
+}
+
+/* ================= FOTO ================= */
+function comprimir(file){const url=URL.createObjectURL(file);return comprimirSrc(url,false).finally(()=>URL.revokeObjectURL(url))}
+function comprimirSrc(url,cors){return new Promise((res,rej)=>{const img=new Image();if(cors)img.crossOrigin='anonymous';img.onload=()=>{const max=720;let w=img.naturalWidth,h=img.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);let dataURL;try{dataURL=c.toDataURL('image/jpeg',.78)}catch(e){return rej(e)}c.toBlob(b=>res({blob:b,dataURL,cor:corMedia(c)}),'image/jpeg',.78)};img.onerror=()=>rej();img.src=url})}
+function testarImg(url){return new Promise((res,rej)=>{const i=new Image();i.onload=res;i.onerror=rej;i.src=url;setTimeout(rej,15000)})}
+function aplicarFoto(r){E._foto=r;E._fotoLink=null;E._remover=false;E._net=false;if(r.cor){const pr=corMaisProxima(r.cor);E.cor=pr[1];E.corNome=pr[0];delete E.neutro;toast('Cor sugerida: '+pr[0].toLowerCase()+' — ajuste se precisar')}renderEditor()}
+async function carregarURL(url){url=(url||'').trim();const m=url.match(/https?:\/\/\S+/i);if(m)url=m[0];
+  if(!/^https?:\/\//i.test(url)&&!/^data:image\//i.test(url))return toast('Cole a imagem ou o endereço dela (começa com http)');
+  // links do Google Imagens trazem a imagem real no parâmetro imgurl
+  try{const u=new URL(url);const real=u.searchParams.get('imgurl');if(real)url=real}catch(e){}
+  toast('Carregando imagem…');
+  try{const r=await comprimirSrc(url,true);return aplicarFoto(r)}catch(e){}
+  try{await testarImg(url);E._fotoLink=url;E._foto=null;E._remover=false;E._net=false;toast('Foto guardada pelo link — escolha a cor abaixo');renderEditor()}
+  catch(e){toast('Não consegui abrir essa imagem. Tente “Copiar imagem” ou salve na galeria.')}}
+function corMedia(c){try{const ctx=c.getContext('2d');const w=c.width,h=c.height;const d=ctx.getImageData(Math.round(w*.3),Math.round(h*.3),Math.max(1,Math.round(w*.4)),Math.max(1,Math.round(h*.4))).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}const x=v=>Math.round(v/n).toString(16).padStart(2,'0');return'#'+x(r)+x(g)+x(b)}catch(e){return null}}
+function corMaisProxima(hex){const a=hexToHsl(hex);let best=null,bd=1e9;for(const c of CORES){const b=hexToHsl(c[1]);const dh=(a.s<.15||b.s<.15)?0:hueDist(a.h,b.h)/180;const d=dh*2+Math.abs(a.s-b.s)+Math.abs(a.l-b.l)*2.2;if(d<bd){bd=d;best=c}}return best}
+
+/* ================= RENDER: PEÇAS ================= */
+function thumb(p,cls=''){
+  const u=fotoURL(p);
+  if(u)return`<div class="th ${cls}"><img src="${esc(u)}" alt="" loading="lazy"><span class="dot" style="background:${esc(p.cor)}"></span></div>`;
+  return`<div class="th ${p.padrao==='estampa'?'est':''} ${cls}" style="background:${esc(p.cor||'#ddd')}"><span class="em">${TIPO[p.tipo]?.em||'👕'}</span></div>`;
+}
+function mosaico(pcs){return`<div class="mos">${pcs.map(p=>`<div class="it">${thumb(p)}<div class="cap">${esc(p.nome)}</div></div>`).join('')}</div>`}
+function porque(r,max=6){
+  if(!r)return'';if(!r.ok)return`<ul class="why"><li class="c">${esc(r.motivo)}</li></ul>`;
+  const li=[...r.pros.map(t=>`<li class="p">${esc(t)}</li>`),...r.cons.map(t=>`<li class="c">${esc(t)}</li>`),...r.dicas.map(t=>`<li class="d">${esc(t)}</li>`)];
+  return`<ul class="why">${li.slice(0,max).join('')}</ul>`;
+}
+function notaHTML(r){const[c,t]=nivel(r);return`<div class="nota"><div class="badge ${c}">${r&&r.ok&&r.score!=null?r.score:'–'}</div><div><b>${t}</b>${r&&r.ok&&r.score!=null?'<div class="small mut">nota de coerência do look</div>':''}</div></div>`}
+
+/* ================= RENDER: TELAS ================= */
+let rq=false;
+function render(soft){
+  if(soft&&document.querySelector('.sbg'))return void renderNav(); // não mexe com folha aberta
+  if(rq)return;rq=true;requestAnimationFrame(()=>{rq=false;_render()});
+}
+function _render(){
+  const app=$('#app');
+  if(!M.estacao)M.estacao=S.cfg.estacaoAuto===false&&S.cfg.ultimaEstacao?S.cfg.ultimaEstacao:estacaoAtual();
+  if(!M.estilo||!estiloPorId(M.estilo))M.estilo=S.cfg.ultimoEstilo&&estiloPorId(S.cfg.ultimoEstilo)?S.cfg.ultimoEstilo:'casual';
+  const t=M.tab;
+  app.innerHTML=t==='montar'?telaMontar():t==='armario'?telaArmario():t==='looks'?telaLooks():telaAjustes();
+  renderNav();
+}
+function renderNav(){
+  const it=[['montar','✨','Montar look'],['armario','🚪','Armário'],['looks','♡','Meus looks'],['ajustes','⚙️','Ajustes']];
+  $('#nav').innerHTML=it.map(([id,em,nm])=>`<button data-a="tab" data-v="${id}" class="${M.tab===id?'on':''}"><span>${em}</span>${nm}</button>`).join('');
+}
+function ctx(){return{estacao:M.estacao,estilo:M.estilo}}
+function chipsContexto(){
+  const atual=estacaoAtual();
+  return`<div class="lbl">Estação</div><div class="chips scroll">${ESTACOES.map(e=>`<button class="chip ${M.estacao===e.id?'on':''}" data-a="estacao" data-v="${e.id}">${e.em} ${e.nome}${e.id===atual?'<small>agora</small>':''}</button>`).join('')}</div>
+  <div class="lbl">Estilo de hoje</div><div class="chips scroll">${estilos().map(e=>`<button class="chip ${M.estilo===e.id?'on':''}" data-a="estilo" data-v="${e.id}">${esc(e.em||'')} ${esc(e.nome)}</button>`).join('')}</div>`;
+}
+function telaMontar(){
+  const dia=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  let h=`<p class="sub" style="margin:0">${esc(cap(dia))}</p><h1>Como você quer<br>se vestir hoje?</h1>`;
+  if(!S.pecas.length){
+    return h+`<div class="card empty" style="margin-top:18px"><div class="big">🚪</div><h2 style="margin-top:6px">Seu armário está vazio</h2><p class="mut">Cadastre suas peças (com foto, se quiser) e eu monto looks que combinam de verdade — por cor, estilo, estação e nível de arrumação.</p><div class="row wrap" style="justify-content:center;margin-top:12px"><button class="btn pri" data-a="nova">+ Cadastrar peça</button><button class="btn" data-a="exemplos">Testar com peças de exemplo</button></div></div>`;
+  }
+  h+=chipsContexto();
+  h+=`<div class="seg"><button class="${M.modo==='sugestoes'?'on':''}" data-a="modo" data-v="sugestoes">✨ Me dê opções</button><button class="${M.modo==='manual'?'on':''}" data-a="modo" data-v="manual">✋ Eu escolho</button></div>`;
+  return h+(M.modo==='sugestoes'?blocoSugestoes():blocoManual());
+}
+function blocoSugestoes(){
+  if(!M.sug)M.sug=gerar(ctx(),{},6,4,M.evitar);
+  const g=M.sug;const st=estiloPorId(M.estilo),es=estacaoPorId(M.estacao);
+  if(g.erro==='faltam')return`<div class="card empty"><div class="big">🧺</div><p><b>Ainda faltam peças para ${esc(st.nome)} na ${esc(es.nome.toLowerCase())}:</b></p><p class="mut">${g.faltam.map(esc).join('<br>')}</p><p class="small mut">Dica: marque as peças com essa estação e esse estilo — ou como “coringa”.</p><button class="btn pri" data-a="nova">+ Cadastrar peça</button></div>`;
+  if(g.erro==='nada')return`<div class="card empty"><div class="big">🤔</div><p>${esc(g.motivo)}</p><button class="btn" data-a="modo" data-v="manual">Montar eu mesma</button></div>`;
+  if(g.erro==='acabou')return`<div class="card empty"><div class="big">🔁</div><p>Você já viu todas as combinações boas para esse estilo.</p><button class="btn pri" data-a="recomecar">Ver do começo</button></div>`;
+  let h=`<p class="small mut" style="margin:0 0 10px">${g.total} combinações coerentes encontradas · mostrando as melhores e mais variadas</p>`;
+  h+=g.looks.map((l,i)=>cardLook(l.pcs,l.r,`<button class="btn sm" data-a="salvarSug" data-i="${i}">♡ Salvar</button><button class="btn sm pri" data-a="usarSug" data-i="${i}">✓ Vou usar hoje</button><button class="btn sm" data-a="ajustarSug" data-i="${i}">✎ Ajustar</button>`)).join('');
+  if(g.total>g.looks.length||M.evitar.size)h+=`<button class="btn full" data-a="outras">↻ Ver outras opções</button>`;
+  return h;
+}
+function cardLook(pcs,r,acoes,extra=''){
+  return`<div class="look">${extra}${mosaico(pcs)}${notaHTML(r)}${porque(r)}<div class="acts">${acoes}</div></div>`;
+}
+const SLOTS=['cima','baixo','inteira','terceira','calcado','bolsa','acessorio'];
+function escolhidas(){return SLOTS.map(t=>M.escolha[t]&&peca(M.escolha[t])).filter(Boolean)}
+function blocoManual(){
+  const c=ctx();
+  const linha=t=>{const p=M.escolha[t]&&peca(M.escolha[t]);const T=TIPO[t];const opc=['terceira','bolsa','acessorio'].includes(t)?' <span class="small mut">(opcional)</span>':'';
+    if(p){const fora=noContexto(p,c);return`<div class="slot" role="button" data-a="pick" data-v="${t}">${thumb(p)}<div class="grow"><div class="small mut">${T.nome}</div><div style="font-weight:500">${esc(p.nome)}</div>${fora!==true?`<div class="small" style="color:var(--warn)">${esc(fora)}</div>`:''}</div><button class="x" data-a="tirar" data-v="${t}" aria-label="Tirar">×</button></div>`}
+    return`<button class="slot" data-a="pick" data-v="${t}"><div class="ph">${T.em}</div><div class="grow"><div style="font-weight:500">${T.nome}${opc}</div><div class="small mut">Toque para escolher</div></div><span class="mut">›</span></button>`};
+  let h='';
+  const usandoInteira=!!M.escolha.inteira, usandoDuas=!!(M.escolha.cima||M.escolha.baixo);
+  if(!usandoInteira){h+=linha('cima')+linha('baixo')}
+  if(!usandoInteira&&!usandoDuas)h+=`<div class="ou">— OU —</div>`;
+  if(!usandoDuas)h+=linha('inteira');
+  h+=linha('terceira')+linha('calcado')+linha('bolsa')+linha('acessorio');
+  const pcs=escolhidas();
+  const r=avaliar(pcs,c,false);
+  let an='';
+  if(!pcs.length)an=`<p class="mut small" style="margin:4px 0">Escolha as peças uma a uma. A cada escolha, as opções seguintes aparecem ordenadas pelo que combina melhor com o que você já pegou.</p>`;
+  else{
+    an=notaHTML(r)+porque(r,8);
+    if(r.ok&&r.faltas&&r.faltas.length)an+=`<p class="small" style="color:var(--warn);margin:0 0 8px">Ainda falta: ${esc(r.faltas.join(', '))}</p>`;
+  }
+  h+=`<div class="look" style="margin-top:14px"><div class="lbl" style="margin-top:0">Análise do look</div>${an}<div class="acts">
+    <button class="btn sm acc" data-a="completar">✨ Completar o que falta</button>
+    ${pcs.length?`<button class="btn sm" data-a="salvarManual">♡ Salvar</button><button class="btn sm pri" data-a="usarManual">✓ Vou usar hoje</button><button class="btn sm danger" data-a="limparManual">Limpar</button>`:''}
+  </div></div>`;
+  return h;
+}
+function telaArmario(){
+  const n=S.pecas.length;
+  let h=`<h1>Meu armário</h1><p class="sub">${n} peça${n===1?'':'s'}${n?' · toque numa peça para editar':''}</p>`;
+  if(!n)return h+`<div class="card empty"><div class="big">👗</div><p class="mut">Comece pelas peças que você mais usa. Foto é opcional — a cor já basta para o app combinar.</p><div class="row wrap" style="justify-content:center"><button class="btn pri" data-a="nova">+ Cadastrar peça</button><button class="btn" data-a="exemplos">Testar com exemplos</button></div></div>`;
+  const cont=t=>S.pecas.filter(p=>p.tipo===t).length;
+  h+=`<input class="inp" placeholder="Buscar peça…" value="${esc(M.busca)}" data-in="busca" style="margin-bottom:10px">`;
+  h+=`<div class="chips scroll" style="margin-bottom:8px"><button class="chip ${M.filtroTipo==='todas'?'on':''}" data-a="ft" data-v="todas">Todas</button>${TIPOS.map(t=>`<button class="chip ${M.filtroTipo===t.id?'on':''}" data-a="ft" data-v="${t.id}">${t.em} ${t.nome} <small>${cont(t.id)}</small></button>`).join('')}</div>`;
+  h+=`<div class="chips scroll" style="margin-bottom:14px"><button class="chip ${M.filtroEst==='todas'?'on':''}" data-a="fe" data-v="todas">Todas as estações</button>${ESTACOES.map(e=>`<button class="chip ${M.filtroEst===e.id?'on':''}" data-a="fe" data-v="${e.id}">${e.em} ${e.nome}</button>`).join('')}</div>`;
+  const q=M.busca.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const lista=S.pecas.filter(p=>(M.filtroTipo==='todas'||p.tipo===M.filtroTipo)&&(M.filtroEst==='todas'||!p.estacoes?.length||p.estacoes.includes(M.filtroEst))&&(!q||(p.nome+' '+p.corNome).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().includes(q)))
+    .sort((a,b)=>ORDEM[a.tipo]-ORDEM[b.tipo]||a.nome.localeCompare(b.nome));
+  h+=lista.length?`<div class="grid">${lista.map(p=>`<button class="pc" data-a="editar" data-v="${p.id}">${thumb(p)}<div class="nm">${esc(p.nome)}</div><div class="mt">${esc(p.corNome||'')}${p.coringa?' · coringa':''}</div></button>`).join('')}</div>`:`<p class="mut">Nenhuma peça com esse filtro.</p>`;
+  return h+`<button class="fab" data-a="nova">+ Peça</button>`;
+}
+function telaLooks(){
+  let h=`<h1>Meus looks</h1><p class="sub">Looks salvos e o que você já usou</p>`;
+  const vivos=S.looks.map(l=>({l,pcs:ordenar(l.pcs.map(peca).filter(Boolean))})).filter(x=>x.pcs.length);
+  if(!vivos.length&&!S.hist.length)return h+`<div class="card empty"><div class="big">♡</div><p class="mut">Quando gostar de um look, toque em <b>♡ Salvar</b>. Quando for usar, toque em <b>✓ Vou usar hoje</b> — assim eu evito repetir as mesmas peças em dias seguidos.</p></div>`;
+  if(vivos.length){h+=`<h2>Salvos (${vivos.length})</h2>`;
+    h+=vivos.map(({l,pcs})=>{const c={estacao:l.estacao,estilo:l.estilo};const r=avaliar(pcs,c,true);const st=estiloPorId(l.estilo),es=estacaoPorId(l.estacao);
+      const tags=`<div style="margin-bottom:10px">${es?`<span class="tag">${es.em} ${es.nome}</span>`:''}${st?`<span class="tag">${esc(st.em||'')} ${esc(st.nome)}</span>`:''}${l.usos?`<span class="tag">usado ${l.usos}×</span>`:''}</div>`;
+      return cardLook(pcs,r,`<button class="btn sm pri" data-a="usarLook" data-v="${l.id}">✓ Vou usar hoje</button><button class="btn sm" data-a="ajustarLook" data-v="${l.id}">✎ Ajustar</button><button class="btn sm danger" data-a="apagarLook" data-v="${l.id}">Apagar</button>`,tags)}).join('');}
+  if(S.hist.length){h+=`<h2>Já usei</h2><div class="card">`+S.hist.slice(0,40).map(x=>{const pcs=ordenar(x.pcs.map(peca).filter(Boolean));const st=estiloPorId(x.estilo);return`<div class="hist"><div style="width:62px" class="small"><b>${fmtData(x.data)}</b><div class="mut">${esc(st?st.nome:'')}</div></div><div class="ths grow">${pcs.map(p=>thumb(p)).join('')}</div><button class="x small mut" data-a="apagarHist" data-v="${x.id}" aria-label="Apagar" style="padding:6px">×</button></div>`}).join('')+`</div>`}
+  return h;
+}
+function telaAjustes(){
+  const st={ok:['ok','Sincronizado na sua conta — aparece igual no celular e no computador'],conectando:['','Conectando à sua conta…'],lento:['','A nuvem está demorando; seus dados ficam salvos neste aparelho por enquanto'],erro:['','Não consegui falar com a nuvem agora; salvando só neste aparelho'],off:['ok','Seu armário fica salvo neste celular. Faça um backup de vez em quando (abaixo).']}[nuvem]||['',''];
+  let h=`<h1>Ajustes</h1><p class="sub">Meu Provador · versão ${VERSAO}</p>`;
+  h+=`<div class="card"><div class="status"><i class="${st[0]}"></i>${esc(st[1])}</div>${nuvem==='ok'&&!ASSETS?'<p class="small mut" style="margin:8px 0 0">As fotos ficam guardadas só neste aparelho.</p>':''}</div>`;
+  h+=`<h2>Estação</h2><div class="card"><button class="toggle" data-a="estAuto" style="width:100%;text-align:left"><span class="sw ${S.cfg.estacaoAuto!==false?'on':''}"></span><span class="grow">Escolher a estação pelo calendário<div class="small mut">Agora: ${estacaoPorId(estacaoAtual()).em} ${estacaoPorId(estacaoAtual()).nome} (hemisfério sul)</div></span></button></div>`;
+  h+=`<h2>Estilos</h2><div class="card">`+estilos().map(e=>{const extra=!ESTILOS_BASE.find(b=>b.id===e.id);return`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span style="width:26px">${esc(e.em||'•')}</span><span class="grow">${esc(e.nome)}<div class="small mut">de ${FORMAL[e.min].toLowerCase()} a ${FORMAL[e.max].toLowerCase()}</div></span>${extra?`<button class="btn sm danger" data-a="apagarEstilo" data-v="${e.id}">Remover</button>`:''}</div>`}).join('')+`<button class="btn sm" style="margin-top:12px" data-a="novoEstilo">+ Criar meu estilo</button></div>`;
+  h+=`<h2>Como o app decide se combina</h2><div class="card explica">
+   <p><b>🎨 Cores.</b> Neutros (preto, branco, bege, jeans, caramelo, marinho, dourado…) vão com tudo. Entre cores, aceito tom sobre tom, cores vizinhas (ex.: rosa + vinho) e complementares (ex.: azul + laranja). No máximo 3 famílias de cor; cores que brigam são descartadas.</p>
+   <p><b>🌀 Estampas.</b> Só uma estampa por look — ela é a protagonista.</p>
+   <p><b>👔 Nível de arrumação.</b> As peças precisam estar no mesmo nível (de “bem à vontade” a “gala”). Um chinelo com blazer de alfaiataria não passa.</p>
+   <p><b>🌦️ Estação.</b> No inverno peço uma terceira peça ou algo quente; no verão evito peças pesadas.</p>
+   <p><b>✨ Acabamento.</b> Ganha ponto quando o calçado ou a bolsa repete uma cor da roupa, e quando calçado e bolsa conversam.</p>
+   <p><b>🔁 Variedade.</b> Peças usadas nos últimos 2 dias perdem ponto, para você não repetir.</p></div>`;
+  h+=`<h2>Backup</h2><div class="card"><p class="small mut" style="margin-top:0">Cópia de segurança do armário (com as fotos), dos looks e do histórico. Guarde no Drive ou mande para o seu e-mail.</p><div class="row wrap">${PODE_BAIXAR?'<button class="btn sm pri" data-a="baixarBackup">Baixar backup</button>':''}<button class="btn sm" data-a="copiarBackup">Copiar backup</button><label class="btn sm">Importar arquivo<input type="file" accept=".json,application/json,text/plain" hidden data-in="importar"></label><button class="btn sm" data-a="colarBackup">Colar backup</button></div></div>`;
+  h+=`<div style="margin-top:22px"><button class="btn sm danger" data-a="apagarTudo">Apagar todo o armário</button></div>`;
+  return h;
+}
+
+/* ================= FOLHAS (modais) ================= */
+function abrir(html,onClose){const l=$('#layer');l.innerHTML=`<div class="sbg" data-a="fechar"><div class="sheet" data-stop><div class="grab"></div>${html}</div></div>`;l._onClose=onClose}
+function fechar(){const l=$('#layer');l.innerHTML='';const f=l._onClose;l._onClose=null;f&&f();render()}
+function confirmar(msg,sim,txtSim='Sim, apagar'){abrir(`<h2>${esc(msg)}</h2><div class="row" style="margin-top:16px"><button class="btn grow" data-a="fechar">Cancelar</button><button class="btn grow acc" data-a="confirmaSim">${esc(txtSim)}</button></div>`);$('#layer')._sim=sim}
+
+/* ---- picker do modo manual ---- */
+function abrirPicker(t){
+  const c=ctx();const T=TIPO[t];
+  const base={...M.escolha};delete base[t];
+  if(t==='inteira'){delete base.cima;delete base.baixo}
+  if(t==='cima'||t==='baixo')delete base.inteira;
+  const atuais=SLOTS.map(s=>base[s]&&peca(base[s])).filter(Boolean);
+  const todas=S.pecas.filter(p=>p.tipo===t);
+  const linhas=todas.map(p=>{const fora=noContexto(p,c);const r=avaliar([...atuais,p],c,false);return{p,fora,r}});
+  const dentro=linhas.filter(x=>x.fora===true).sort((a,b)=>(b.r.ok-a.r.ok)||((b.r.score??0)-(a.r.score??0)));
+  const fora=linhas.filter(x=>x.fora!==true).sort((a,b)=>(b.r.ok-a.r.ok)||((b.r.score??0)-(a.r.score??0)));
+  const row=(x,dim)=>{const[cl,tx]=atuais.length?nivel(x.r):['n',''];const det=!x.r.ok?x.r.motivo:(x.r.pros[0]||'');
+    return`<button class="op ${dim?'dim':''}" data-a="escolher" data-t="${t}" data-v="${x.p.id}">${thumb(x.p)}<div class="grow"><div style="font-weight:500">${esc(x.p.nome)}</div>${atuais.length?`<span class="pill ${cl}">${tx}${x.r.ok&&x.r.score!=null?' · '+x.r.score:''}</span>`:''}${det&&atuais.length?`<div class="small mut" style="margin-top:2px">${esc(det)}</div>`:''}${dim?`<div class="small" style="color:var(--warn)">${esc(x.fora)}</div>`:''}</div></button>`};
+  let h=`<h2>${T.em} ${T.nome}</h2>`;
+  if(atuais.length)h+=`<p class="small mut" style="margin-top:-4px">Ordenado pelo que combina com o que você já escolheu.</p>`;
+  if(!todas.length)h+=`<p class="mut">Você ainda não tem ${T.nome.toLowerCase()} cadastrada.</p><button class="btn pri" data-a="novaTipo" data-v="${t}">+ Cadastrar ${T.nome.toLowerCase()}</button>`;
+  h+=dentro.map(x=>row(x,false)).join('');
+  if(todas.length&&!dentro.length)h+=`<p class="small mut">Nenhuma ${T.nome.toLowerCase()} marcada para esse estilo e estação.</p>`;
+  if(fora.length)h+=`<details ${dentro.length?'':'open'}><summary class="small mut">Fora desse estilo/estação (${fora.length})</summary>${fora.map(x=>row(x,true)).join('')}</details>`;
+  if(M.escolha[t])h+=`<button class="btn full" style="margin-top:10px" data-a="tirar" data-v="${t}">Sem ${T.nome.toLowerCase()}</button>`;
+  abrir(h);
+}
+
+/* ---- editor de peça ---- */
+let E=null;
+function abrirEditor(p,tipoInicial){
+  E=p?{...limpo(p),estacoes:[...(p.estacoes||[])],estilos:[...(p.estilos||[])]}:{id:null,nome:'',tipo:tipoInicial||'cima',cor:'#1d1c1c',corNome:'Preto',padrao:'liso',estacoes:[],estilos:M.estilo?[M.estilo]:[],coringa:false,formal:2,calor:2};
+  E._foto=null;renderEditor();
+}
+function renderEditor(){
+  const p=E;const u=E._foto?E._foto.dataURL:E._fotoLink?E._fotoLink:E._remover?null:(E.id?fotoURL(E):null);
+  const prev={...E,fotoAsset:null,fotoLink:null,id:'__prev'};
+  const th=u?`<div class="th"><img src="${esc(u)}" alt=""></div>`:thumb(prev);
+  const custom=!CORES.find(c=>c[0]===p.corNome);
+  let h=`<h2>${p.id?'Editar peça':'Nova peça'}</h2>
+  <div class="fotobox field" style="align-items:flex-start">${th}<div class="grow"><div style="font-weight:500">${u?'Trocar foto':'Foto da peça'} <span class="small mut">(opcional)</span></div><div class="small mut">Com foto, eu sugiro a cor sozinha.</div>
+   <div class="fotobtns"><label class="btn sm">📷 Câmera<input type="file" accept="image/*" capture="environment" hidden data-in="foto"></label><label class="btn sm">🖼️ Galeria<input type="file" accept="image/*" hidden data-in="foto"></label><button class="btn sm ${E._net?'pri':''}" data-a="eNet">🌐 Da internet</button>${u?'<button class="btn sm danger" data-a="eSemFoto">Remover</button>':''}</div></div></div>
+  ${E._net?`<div class="card field" style="padding:12px"><div style="font-weight:500;margin-bottom:8px">Foto da internet</div><a class="btn sm" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent((p.nome||TIPO[p.tipo].nome)+' '+(p.corNome||'')+' feminino')}" target="_blank" rel="noopener">🔎 Buscar no Google Imagens</a>
+   <ol class="small mut" style="padding-left:18px;margin:10px 0">
+    <li>Ache a sua peça (ou uma bem parecida) e toque na foto para abrir grande.</li>
+    <li>Toque e segure na imagem → <b>Copiar imagem</b> (ou <b>Copiar endereço da imagem</b>).</li>
+    <li>Volte aqui, toque e segure no campo abaixo → <b>Colar</b>.</li></ol>
+   <input class="inp" data-in="netUrl" placeholder="Toque e segure aqui → Colar" autocomplete="off">
+   <div class="small mut" style="margin-top:8px">Outro jeito: salve a imagem no celular e escolha em 🖼️ Galeria.</div></div>`:''}
+  <div class="field"><div class="lbl">Nome</div><input class="inp" data-in="nome" value="${esc(p.nome)}" placeholder="Ex.: Camisa de linho, Calça pantalona"></div>
+  <div class="field"><div class="lbl">Tipo</div><div class="chips">${TIPOS.map(t=>`<button class="chip ${p.tipo===t.id?'on':''}" data-a="eTipo" data-v="${t.id}">${t.em} ${t.nome}</button>`).join('')}</div><div class="small mut" style="margin-top:6px">${esc(TIPO[p.tipo].ex)}</div></div>
+  <div class="field"><div class="lbl">Cor principal · <span style="text-transform:none;letter-spacing:0;color:var(--ink)">${esc(p.corNome)}</span></div><div class="cores">${CORES.map(c=>`<button class="cor ${p.corNome===c[0]?'on':''}" style="background:${c[1]}" title="${c[0]}" aria-label="${c[0]}" data-a="eCor" data-v="${c[0]}"></button>`).join('')}<label class="cor mais ${custom?'on':''}" title="Outra cor" ${custom?`style="background:${esc(p.cor)}"`:''}>+<input type="color" value="${esc(p.cor)}" data-in="corLivre"></label></div>
+  ${custom?`<input class="inp" style="margin-top:8px" data-in="corNome" value="${esc(p.corNome)}" placeholder="Nome da cor (ex.: verde-musgo)">`:''}</div>
+  <div class="field"><div class="lbl">Padrão</div><div class="chips"><button class="chip ${p.padrao!=='estampa'?'on':''}" data-a="ePad" data-v="liso">Lisa</button><button class="chip ${p.padrao==='estampa'?'on':''}" data-a="ePad" data-v="estampa">Estampada (floral, listras, xadrez…)</button></div></div>
+  <div class="field"><div class="lbl">Estações</div><div class="chips">${ESTACOES.map(e=>`<button class="chip ${p.estacoes.includes(e.id)?'on':''}" data-a="eEst" data-v="${e.id}">${e.em} ${e.nome}</button>`).join('')}</div><div class="small mut" style="margin-top:6px">${p.estacoes.length?'':'Nenhuma marcada = serve o ano todo'}</div></div>
+  <div class="field"><div class="lbl">Estilos</div><div class="chips">${estilos().map(e=>`<button class="chip ${p.estilos.includes(e.id)?'on':''}" data-a="eSty" data-v="${e.id}">${esc(e.em||'')} ${esc(e.nome)}</button>`).join('')}</div>
+   <button class="toggle" data-a="eCor2" style="width:100%;text-align:left"><span class="sw ${p.coringa?'on':''}"></span><span class="grow">Peça coringa<div class="small mut">Entra em qualquer estilo do mesmo nível de arrumação</div></span></button></div>
+  <div class="field"><div class="lbl">Nível de arrumação · <span style="text-transform:none;letter-spacing:0;color:var(--ink)">${FORMAL[p.formal]}</span></div><input type="range" class="range" min="1" max="5" step="1" value="${p.formal}" data-in="formal"><div class="row small mut" style="justify-content:space-between"><span>Bem à vontade</span><span>Gala</span></div></div>
+  ${['calcado','bolsa','acessorio'].includes(p.tipo)?'':`<div class="field"><div class="lbl">Tecido / calor</div><div class="chips">${[1,2,3].map(v=>`<button class="chip ${+p.calor===v?'on':''}" data-a="eCal" data-v="${v}">${['','🌬️ Leve','🍃 Média','🔥 Quente'][v]}</button>`).join('')}</div></div>`}
+  <div class="row" style="margin-top:18px">${p.id?`<button class="btn danger" data-a="eApagar">Apagar</button>`:''}<button class="btn grow" data-a="fechar">Cancelar</button><button class="btn pri grow" data-a="eSalvar">Salvar peça</button></div>`;
+  const l=$('#layer');const sc=l.querySelector('.sheet')?.scrollTop||0;
+  abrir(h,()=>{E=null});
+  const s=l.querySelector('.sheet');if(s)s.scrollTop=sc;
+}
+async function salvarEditor(){
+  const p=E;
+  if(!p.nome.trim())p.nome=`${TIPO[p.tipo].nome} ${p.corNome.toLowerCase()}`;
+  const novo=!p.id;if(novo)p.id=uid();
+  const foto=p._foto,link=p._fotoLink,rem=p._remover;delete p._foto;delete p._fotoLink;delete p._remover;delete p._net;
+  if(rem&&!foto&&!link){p.fotoAsset=null;p.fotoLink=null;delFotoLocal(p.id)}
+  if(link&&!foto){p.fotoLink=link;p.fotoAsset=null;delFotoLocal(p.id)}
+  if(['calcado','bolsa','acessorio'].includes(p.tipo))p.calor=2;
+  p.nome=p.nome.trim();
+  if(foto){
+    let ok=false;
+    if(ASSETS&&foto.blob){try{const a=await ASSETS.upload(foto.blob);if(p.fotoAsset&&p.fotoAsset!==a.id){try{ASSETS.delete(p.fotoAsset)}catch(e){}}p.fotoAsset=a.id;delFotoLocal(p.id);ok=true}catch(e){console.warn(e)}}
+    if(!ok){p.fotoAsset=null;putFotoLocal(p.id,foto.dataURL)}
+    p.fotoLink=null;
+  }
+  const vel=p.criado;p.criado=vel||new Date().toISOString();
+  putPeca(p);M.sug=null;E=null;
+  $('#layer')._onClose=null;fechar();toast(novo?'Peça adicionada ✨':'Peça atualizada');
+}
+
+/* ---- novo estilo ---- */
+function abrirNovoEstilo(){
+  abrir(`<h2>Criar meu estilo</h2><div class="field"><div class="lbl">Nome</div><input class="inp" id="nsNome" placeholder="Ex.: Igreja, Faculdade, Encontro"></div>
+  <div class="field"><div class="lbl">Emoji</div><input class="inp" id="nsEm" placeholder="Ex.: 🎓" maxlength="4"></div>
+  <div class="field"><div class="lbl">Nível de arrumação</div><div class="row"><select class="inp" id="nsMin">${[1,2,3,4,5].map(v=>`<option value="${v}" ${v===2?'selected':''}>de ${FORMAL[v]}</option>`).join('')}</select><select class="inp" id="nsMax">${[1,2,3,4,5].map(v=>`<option value="${v}" ${v===3?'selected':''}>até ${FORMAL[v]}</option>`).join('')}</select></div></div>
+  <div class="row"><button class="btn grow" data-a="fechar">Cancelar</button><button class="btn pri grow" data-a="salvarEstilo">Criar</button></div>`);
+}
+
+/* ================= AÇÕES ================= */
+function registrarUso(pcs,c){
+  const e={id:uid(),data:hoje(),pcs:pcs.map(p=>p.id),estilo:c.estilo,estacao:c.estacao};
+  S.hist.unshift(e);putMeta();M.sug=null;
+  toast('Look de hoje registrado! Arrasa ✨');
+}
+function salvarComoLook(pcs,c){
+  const key=pcs.map(p=>p.id).sort().join('|');
+  if(S.looks.some(l=>l.pcs.slice().sort().join('|')===key&&l.estilo===c.estilo))return toast('Esse look já está salvo');
+  putLook({id:uid(),pcs:pcs.map(p=>p.id),estilo:c.estilo,estacao:c.estacao,criado:new Date().toISOString(),usos:0});
+  toast('Look salvo em “Meus looks” ♡');
+}
+function carregarParaManual(pcs,c){
+  M.escolha={};for(const p of pcs)M.escolha[p.tipo]=p.id;
+  if(c){M.estacao=c.estacao;M.estilo=c.estilo}
+  M.modo='manual';M.tab='montar';render();scrollTo(0,0);
+}
+function exemplos(){
+  const X=(nome,tipo,corNome,est,sty,formal,calor,extra={})=>{const c=CORES.find(c=>c[0]===corNome);return{id:uid(),nome,tipo,cor:c[1],corNome,padrao:'liso',estacoes:est,estilos:sty,coringa:false,formal,calor,criado:new Date().toISOString(),exemplo:true,...extra}};
+  const T=[],PV=['primavera','verao'],OI=['outono','inverno'],MEIA=['primavera','outono'];
+  const lista=[
+   X('Camiseta branca','cima','Branco',[],['casual','esportivo'],2,1,{coringa:true}),
+   X('Camisa de linho','cima','Bege',PV,['casual','trabalho','praia'],3,1),
+   X('Blusa de seda','cima','Preto',[],['trabalho','elegante','festa'],4,1),
+   X('Blusa ciganinha','cima','Rosa claro',PV,['romantico','casual'],2,1),
+   X('Camisa listrada','cima','Azul-marinho',[],['casual','trabalho'],3,1,{padrao:'estampa'}),
+   X('Regata canelada','cima','Verde-oliva',PV,['casual'],2,1),
+   X('Suéter de tricô','cima','Off-white',OI,['casual','romantico','trabalho'],3,3),
+   X('Calça jeans reta','baixo','Jeans escuro',[],['casual','trabalho'],2,2,{coringa:true}),
+   X('Calça de alfaiataria','baixo','Preto',[],['trabalho','elegante'],4,2),
+   X('Saia midi plissada','baixo','Caramelo',[...MEIA,'inverno'],['romantico','trabalho'],3,2),
+   X('Short jeans','baixo','Jeans claro',['verao','primavera'],['casual','praia'],1,1),
+   X('Pantalona de linho','baixo','Off-white',PV,['casual','elegante','trabalho'],3,1),
+   X('Vestido floral','inteira','Vinho',PV,['romantico','casual'],3,1,{padrao:'estampa'}),
+   X('Vestido preto midi','inteira','Preto',[],['elegante','festa'],4,2),
+   X('Blazer alongado','terceira','Off-white',[],['trabalho','elegante'],4,2),
+   X('Jaqueta jeans','terceira','Jeans claro',[...MEIA,'inverno'],['casual'],2,2),
+   X('Cardigã','terceira','Cinza',OI,['casual','romantico'],2,2),
+   X('Casaco de lã','terceira','Caramelo',['inverno'],['casual','trabalho','elegante'],4,3),
+   X('Tênis branco','calcado','Branco',[],['casual','esportivo'],2,2,{coringa:true}),
+   X('Sandália de tiras','calcado','Caramelo',PV,['casual','romantico','praia'],2,2),
+   X('Scarpin nude','calcado','Nude',[],['trabalho','elegante','festa'],4,2),
+   X('Bota cano curto','calcado','Preto',OI,['casual','trabalho'],3,2),
+   X('Bolsa estruturada','bolsa','Preto',[],['trabalho','elegante','casual'],3,2,{coringa:true}),
+   X('Bolsa de palha','bolsa','Bege',PV,['casual','praia','romantico'],2,2),
+   X('Colar dourado','acessorio','Dourado',[],[],3,2,{coringa:true}),
+   X('Lenço de seda','acessorio','Terracota',[],['romantico','casual','trabalho'],3,2)];
+  for(const p of lista)putPeca(p);
+  M.sug=null;toast(lista.length+' peças de exemplo adicionadas');render();
+}
+
+document.addEventListener('click',async e=>{
+  const sheet=e.target.closest('[data-stop]');
+  const b=e.target.closest('[data-a]');
+  if(!b)return;
+  if(b.dataset.a==='fechar'&&sheet&&b.classList.contains('sbg'))return; // clique dentro da folha
+  const a=b.dataset.a,v=b.dataset.v;
+  if(b.tagName==='LABEL')return;
+  e.preventDefault();
+  const c=ctx();
+  switch(a){
+    case'fechar':fechar();break;
+    case'tab':M.tab=v;render();scrollTo(0,0);break;
+    case'estacao':M.estacao=v;M.sug=null;M.evitar.clear();S.cfg.ultimaEstacao=v;salvarLocal();render();break;
+    case'estilo':M.estilo=v;M.sug=null;M.evitar.clear();S.cfg.ultimoEstilo=v;salvarLocal();render();break;
+    case'modo':M.modo=v;render();break;
+    case'outras':if(M.sug&&M.sug.looks)M.sug.looks.forEach(l=>M.evitar.add(l.key));M.sug=gerar(c,{},6,10,M.evitar);render();scrollTo({top:0,behavior:'smooth'});break;
+    case'recomecar':M.evitar.clear();M.sug=null;render();break;
+    case'salvarSug':{const l=M.sug.looks[+b.dataset.i];salvarComoLook(l.pcs,c);break}
+    case'usarSug':{const l=M.sug.looks[+b.dataset.i];registrarUso(l.pcs,c);render();break}
+    case'ajustarSug':{const l=M.sug.looks[+b.dataset.i];carregarParaManual(l.pcs);break}
+    case'pick':if(e.target.closest('.x'))return;abrirPicker(v);break;
+    case'tirar':delete M.escolha[v];if($('#layer').innerHTML)fechar();else render();break;
+    case'escolher':{const t=b.dataset.t;M.escolha[t]=v;if(t==='inteira'){delete M.escolha.cima;delete M.escolha.baixo}if(t==='cima'||t==='baixo')delete M.escolha.inteira;fechar();break}
+    case'completar':{const fix={...M.escolha};const g=gerar(c,fix,1,0);if(g.looks){M.escolha={};for(const p of g.looks[0].pcs)M.escolha[p.tipo]=p.id;render();toast('Completei com o que combina melhor')}else if(g.erro==='faltam')toast('Faltam peças: '+g.faltam.join(', '));else toast(g.motivo||'Não achei nada que combine com essas escolhas');break}
+    case'salvarManual':{const pcs=escolhidas();const r=avaliar(pcs,c,true);if(!r.ok&&r.motivo.startsWith('Falta'))return toast(r.motivo);salvarComoLook(pcs,c);break}
+    case'usarManual':{const pcs=escolhidas();const r=avaliar(pcs,c,true);if(!r.ok&&r.motivo.startsWith('Falta'))return toast(r.motivo);registrarUso(pcs,c);render();break}
+    case'limparManual':M.escolha={};render();break;
+    case'usarLook':{const l=S.looks.find(x=>x.id===v);if(!l)break;const pcs=l.pcs.map(peca).filter(Boolean);registrarUso(pcs,{estilo:l.estilo,estacao:l.estacao});putLook({...l,usos:(l.usos||0)+1});render();break}
+    case'ajustarLook':{const l=S.looks.find(x=>x.id===v);if(l)carregarParaManual(l.pcs.map(peca).filter(Boolean),{estilo:l.estilo,estacao:l.estacao});break}
+    case'apagarLook':confirmar('Apagar este look salvo?',()=>{delLook(v);toast('Look apagado')});break;
+    case'apagarHist':S.hist=S.hist.filter(h=>h.id!==v);putMeta();render();break;
+    case'confirmaSim':{const f=$('#layer')._sim;$('#layer')._sim=null;fechar();f&&f();render();break}
+    case'nova':abrirEditor(null);break;
+    case'novaTipo':abrirEditor(null,v);break;
+    case'editar':abrirEditor(peca(v));break;
+    case'exemplos':exemplos();break;
+    case'ft':M.filtroTipo=v;render();break;
+    case'fe':M.filtroEst=v;render();break;
+    // editor
+    case'eTipo':E.tipo=v;renderEditor();break;
+    case'eCor':{const cc=CORES.find(x=>x[0]===v);E.cor=cc[1];E.corNome=cc[0];delete E.neutro;renderEditor();break}
+    case'ePad':E.padrao=v;renderEditor();break;
+    case'eEst':E.estacoes=E.estacoes.includes(v)?E.estacoes.filter(x=>x!==v):[...E.estacoes,v];renderEditor();break;
+    case'eSty':E.estilos=E.estilos.includes(v)?E.estilos.filter(x=>x!==v):[...E.estilos,v];renderEditor();break;
+    case'eCor2':E.coringa=!E.coringa;renderEditor();break;
+    case'eCal':E.calor=+v;renderEditor();break;
+    case'eNet':E._net=!E._net;renderEditor();if(E._net)setTimeout(()=>{const i=document.querySelector('[data-in=netUrl]');if(i)i.scrollIntoView({block:'center',behavior:'smooth'})},50);break;
+    case'eSemFoto':E._remover=true;E._foto=null;E._fotoLink=null;renderEditor();break;
+    case'eSalvar':await salvarEditor();break;
+    case'eApagar':{const id=E.id,nm=E.nome;confirmar(`Apagar “${nm}” do armário?`,()=>{delPeca(id);E=null;toast('Peça apagada')});break}
+    // ajustes
+    case'estAuto':S.cfg.estacaoAuto=S.cfg.estacaoAuto===false;if(S.cfg.estacaoAuto)M.estacao=estacaoAtual();putMeta();render();break;
+    case'novoEstilo':abrirNovoEstilo();break;
+    case'salvarEstilo':{const nome=$('#nsNome').value.trim();if(!nome)return toast('Dê um nome ao estilo');let mn=+$('#nsMin').value,mx=+$('#nsMax').value;if(mn>mx)[mn,mx]=[mx,mn];S.cfg.estilosExtra=[...(S.cfg.estilosExtra||[]),{id:'x'+uid(),nome,em:$('#nsEm').value.trim()||'⭐',min:mn,max:mx}];putMeta();fechar();toast('Estilo criado');break}
+    case'apagarEstilo':confirmar('Remover este estilo?',()=>{S.cfg.estilosExtra=S.cfg.estilosExtra.filter(x=>x.id!==v);if(M.estilo===v)M.estilo='casual';putMeta()},'Remover');break;
+    case'baixarBackup':{const txt=textoBackup();try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download='provador-backup-'+hoje()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Backup baixado')}catch(err){toast('Não deu para baixar aqui — use Copiar backup')}break}
+    case'copiarBackup':{const txt=textoBackup();try{await navigator.clipboard.writeText(txt);toast('Backup copiado — cole num lugar seguro (e-mail, notas…)')}catch(err){abrir(`<h2>Backup</h2><p class="small mut">Selecione tudo e copie:</p><textarea class="inp" readonly>${esc(txt)}</textarea>`)}break}
+    case'colarBackup':abrir(`<h2>Colar backup</h2><p class="small mut">Cole aqui o texto do backup. Ele substitui o armário atual.</p><textarea class="inp" id="bkTxt"></textarea><div class="row" style="margin-top:12px"><button class="btn grow" data-a="fechar">Cancelar</button><button class="btn pri grow" data-a="aplicarBackup">Importar</button></div>`);break;
+    case'aplicarBackup':importar($('#bkTxt').value);break;
+    case'apagarTudo':confirmar('Apagar TODAS as peças, looks e histórico?',()=>{for(const p of[...S.pecas])delPeca(p.id);for(const l of[...S.looks])delLook(l.id);S.hist=[];putMeta();M.escolha={};M.sug=null;toast('Armário apagado')},'Apagar tudo');break;
+  }
+});
+function textoBackup(){const fotos={};for(const p of S.pecas)if(FOTOS[p.id]&&!p.fotoAsset)fotos[p.id]=FOTOS[p.id];return JSON.stringify({app:'meu-provador',v:2,data:new Date().toISOString(),pecas:S.pecas,looks:S.looks,hist:S.hist,cfg:S.cfg,fotos})}
+function importar(txt){
+  try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.pecas))throw 0;
+    for(const p of[...S.pecas])if(!o.pecas.find(x=>x.id===p.id))delPeca(p.id);
+    for(const l of[...S.looks])if(!(o.looks||[]).find(x=>x.id===l.id))delLook(l.id);
+    for(const[id,d]of Object.entries(o.fotos||{}))putFotoLocal(id,d);
+    for(const p of o.pecas)putPeca(p);for(const l of(o.looks||[]))putLook(l);
+    S.hist=o.hist||[];S.cfg={...S.cfg,...(o.cfg||{})};putMeta();M.sug=null;
+    if($('#layer').innerHTML)fechar();toast('Backup importado: '+o.pecas.length+' peças');render();
+  }catch(err){toast('Esse texto não é um backup válido')}
+}
+document.addEventListener('paste',async e=>{
+  if(!E)return;const cd=e.clipboardData;if(!cd)return;
+  const item=[...(cd.items||[])].find(i=>i.type&&i.type.startsWith('image/'));
+  if(item){e.preventDefault();const f=item.getAsFile();try{aplicarFoto(await comprimir(f))}catch(err){toast('Não consegui usar essa imagem')}return}
+  const t=cd.getData('text/plain')||'';const html=cd.getData('text/html')||'';
+  const src=(html.match(/<img[^>]+src=["']([^"']+)/i)||[])[1];
+  if(src||/https?:\/\//i.test(t)){e.preventDefault();carregarURL(src||t)}
+});
+document.addEventListener('input',e=>{
+  const k=e.target.dataset.in;if(!k)return;
+  if(k==='busca'){M.busca=e.target.value;const pos=e.target.selectionStart;_render();const i=document.querySelector('[data-in="busca"]');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(_){}}return}
+  if(!E)return;
+  if(k==='nome')E.nome=e.target.value;
+  if(k==='corNome')E.corNome=e.target.value||'Personalizada';
+  if(k==='formal'){E.formal=+e.target.value;const l=e.target.closest('.field').querySelector('.lbl span');if(l)l.textContent=FORMAL[E.formal]}
+});
+document.addEventListener('change',async e=>{
+  const k=e.target.dataset.in;if(!k)return;
+  if(k==='corLivre'&&E){E.cor=e.target.value;const pr=corMaisProxima(E.cor);if(CORES.find(c=>c[0]===E.corNome))E.corNome=pr[0]+' (tom)';E.neutro=!!pr[2];renderEditor()}
+  if(k==='foto'&&E){const f=e.target.files&&e.target.files[0];if(!f)return;try{aplicarFoto(await comprimir(f))}catch(err){toast('Não consegui abrir essa imagem')}}
+  if(k==='netUrl'&&E&&e.target.value.trim())carregarURL(e.target.value);
+  if(k==='importar'){const f=e.target.files&&e.target.files[0];if(!f)return;importar(await f.text())}
+});
+
+/* ================= INÍCIO ================= */
+(async()=>{render();await abrirIDB();await idbAll();render();conectar()})();
+try{if('serviceWorker'in navigator&&location.protocol==='https:'&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+</script>
+</body>
+</html>
