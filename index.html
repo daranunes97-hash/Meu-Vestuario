@@ -135,6 +135,7 @@ nav button.on span{filter:none;opacity:1}
 textarea.inp{min-height:110px;font-size:12px;font-family:ui-monospace,monospace}
 details summary{cursor:pointer;font-weight:500;padding:6px 0}
 .explica p{margin:6px 0;font-size:14px}
+.quizop{transition:.15s}.quizop.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 </style>
 </head>
 <body>
@@ -176,7 +177,7 @@ const CORES=[
 
 /* ================= ESTADO ================= */
 const PODE_BAIXAR=/github\.io$|localhost/.test(location.hostname);
-const VERSAO='1.1 · 16/nov';
+const VERSAO='1.2 · 16/nov';
 const LS='provador-v1';
 let S={pecas:[],looks:[],hist:[],cfg:{estacaoAuto:true,estilosExtra:[]}};
 try{const raw=localStorage.getItem(LS); if(raw){const o=JSON.parse(raw); S={...S,...o,cfg:{...S.cfg,...(o.cfg||{})}}}}catch(e){}
@@ -285,6 +286,8 @@ function avaliar(lista,ctx,completo=true){
   if(ctx.estacao==='inverno'){if(tem('terceira').length||roupas.some(p=>+p.calor===3)){s+=4;pros.push('Quentinho para o frio')}else if(roupas.length){s-=10;cons.push('Está frio: uma terceira peça ou algo mais quente cairia bem')}}
   else if(ctx.estacao==='verao'){if(roupas.some(p=>+p.calor===3)){s-=12;cons.push('Tem peça quente demais para o verão')}else if(roupas.length&&tem('terceira').length===0){s+=3;pros.push('Leve para o calor')}}
   if(tem('terceira').length&&ctx.estacao!=='inverno'){s+=4;pros.push('A terceira peça dá acabamento ao look')}
+  const pf=S.cfg.perfil;
+  if(pf&&pcs.length>=3){if(combinaComPerfil(pcs,pf.principal)){s+=5;pros.unshift(`Tem a sua cara: ${PERFIS[pf.principal].em} ${PERFIS[pf.principal].nome}`)}else if(pf.secundario&&combinaComPerfil(pcs,pf.secundario)){s+=3;pros.unshift(`Tem o seu toque ${PERFIS[pf.secundario].nome.toLowerCase()} ${PERFIS[pf.secundario].em}`)}}
   const rec=diasDesdeUso(pcs.filter(p=>['cima','baixo','inteira'].includes(p.tipo)));
   if(rec!==null&&rec<=2){s-=8;cons.push(rec===0?'Uma dessas peças já foi usada hoje':`Uma dessas peças foi usada há ${rec} dia${rec>1?'s':''}`)}
   return{ok:true,score:Math.max(0,Math.min(100,Math.round(s))),pros,cons,dicas,faltas};
@@ -339,6 +342,123 @@ function gerar(ctx,fixos={},n=6,jitter=0,evitar=new Set()){
 }
 const ordenar=pcs=>[...pcs].sort((a,b)=>ORDEM[a.tipo]-ORDEM[b.tipo]);
 function nivel(r){if(!r||!r.ok)return['r','Não combina'];if(r.score==null)return['n','—'];if(r.score>=85)return['g','Combina muito'];if(r.score>=70)return['g','Combina'];if(r.score>=55)return['y','Dá pra usar'];return['y','Arriscado']}
+
+/* ================= TESTE DE ESTILO PESSOAL ================= */
+const PERFIS={
+ natural:{nome:'Natural',em:'🌿',frase:'Conforto em primeiro lugar, sem abrir mão de estar bonita.',
+  desc:'Você gosta de roupas práticas, que deixam você livre para se mexer. Valoriza tecidos naturais, peças soltinhas e um visual sem esforço — o famoso “arrumada sem parecer que tentou”.',
+  palavras:['confortável','espontânea','prática','descomplicada'],cores:'Terrosos, verde-oliva, caramelo, bege, jeans e branco',
+  pecas:['Jeans confortável','Camiseta de algodão boa','Camisa de linho','Tênis branco','Rasteira ou sandália baixa','Jaqueta jeans'],
+  dicas:['Invista em tecidos de qualidade: linho e algodão fazem o básico parecer caro.','Um acessório natural (madeira, palha, couro) dá acabamento sem pesar.','Para ocasiões mais arrumadas, troque o tênis por um mocassim ou sandália de couro.'],
+  evite:'Peças muito justas, brilhos e saltos desconfortáveis — você não vai se sentir você.'},
+ classico:{nome:'Clássica',em:'🤍',frase:'Atemporal, organizada e sempre adequada.',
+  desc:'Você prefere peças que não saem de moda, cortes retos e combinações seguras. Gosta de parecer confiável e bem resolvida em qualquer lugar.',
+  palavras:['atemporal','discreta','confiável','organizada'],cores:'Azul-marinho, bege, branco, cinza, caramelo e preto',
+  pecas:['Camisa branca','Calça de alfaiataria','Trench coat ou blazer','Camisa listrada','Mocassim ou sapatilha','Bolsa estruturada'],
+  dicas:['Tenha uma base de neutros que combinam entre si — o armário vira um quebra-cabeça fácil.','Um único ponto de cor (lenço, sapato) moderniza o clássico.','Ajuste as peças ao corpo: caimento perfeito é o segredo do estilo clássico.'],
+  evite:'Excesso de tendências passageiras e estampas muito chamativas.'},
+ elegante:{nome:'Elegante',em:'✨',frase:'Sofisticação silenciosa: menos peças, mais qualidade.',
+  desc:'Você gosta de tudo impecável, de tecidos nobres e de looks limpos. Prefere o monocromático e os detalhes de qualidade à quantidade de informação.',
+  palavras:['sofisticada','refinada','polida','minimalista'],cores:'Off-white, nude, camelo, preto, cinza e tons sóbrios em degradê',
+  pecas:['Blazer de bom corte','Blusa de seda','Calça pantalona','Scarpin nude','Vestido midi liso','Joias douradas discretas'],
+  dicas:['Looks monocromáticos (tudo bege, tudo preto) são a sua assinatura.','Prefira poucos acessórios, mas bons.','Cuide de passadoria e caimento: amassado é o inimigo do elegante.'],
+  evite:'Estampas grandes, muitas cores ao mesmo tempo e peças muito informais.'},
+ romantico:{nome:'Romântica',em:'🌷',frase:'Delicadeza, feminilidade e um toque doce.',
+  desc:'Você se sente bem com peças femininas, tecidos leves e detalhes delicados como babados, rendas, laços e flores. Seu visual transmite doçura.',
+  palavras:['delicada','feminina','doce','suave'],cores:'Rosa, lilás, pêssego, azul-claro, off-white e tons pastel',
+  pecas:['Vestido floral','Blusa com babado ou ciganinha','Saia midi rodada','Sapatilha ou sandália delicada','Cardigã','Brincos pequenos e delicados'],
+  dicas:['Equilibre uma peça romântica com uma básica (floral + jeans) para não ficar “fantasia”.','Tons pastel ficam lindos em tom sobre tom.','Acinture o look: cintos finos valorizam o estilo.'],
+  evite:'Peças muito rígidas e cores muito escuras do pé à cabeça.'},
+ sexy:{nome:'Sensual',em:'💋',frase:'Confiança, presença e valorização do corpo.',
+  desc:'Você gosta de se sentir poderosa e atraente. Prefere peças que valorizam suas formas, decotes na medida e cores marcantes.',
+  palavras:['poderosa','confiante','marcante','sedutora'],cores:'Vermelho, preto, vinho, nude e pink',
+  pecas:['Vestido tubinho ou justo','Calça de cintura alta justa','Body','Salto alto','Sandália de tiras','Argolas e brilho na medida'],
+  dicas:['Escolha um ponto de destaque por vez (decote OU perna OU costas).','Vermelho e preto são seus coringas de impacto.','Tecidos com caimento (malha, cetim) valorizam sem esforço.'],
+  evite:'Roupas largas demais que escondem o corpo — você vai se sentir apagada.'},
+ criativo:{nome:'Criativa',em:'🎨',frase:'Original, ousada e cheia de personalidade.',
+  desc:'Você gosta de misturar: cores, estampas, texturas, épocas. A moda é sua forma de expressão e você não tem medo de experimentar.',
+  palavras:['original','ousada','artística','livre'],cores:'Sem regras: cores vibrantes, misturas e contrastes',
+  pecas:['Peça vintage ou de brechó','Kimono ou peça estampada','Acessórios artesanais','Calçado colorido','Saia ou calça com estampa','Peças com textura (crochê, patchwork)'],
+  dicas:['Use uma base neutra quando quiser misturar várias estampas — ela organiza o caos.','Repita uma cor da estampa no sapato ou na bolsa para dar unidade.','Brechós são o seu paraíso.'],
+  evite:'Looks totalmente básicos e sem nenhum detalhe — você vai se sentir sem graça.'},
+ moderno:{nome:'Moderna',em:'⚡',frase:'Impacto, contraste e linhas marcantes.',
+  desc:'Você gosta de peças com design, cortes geométricos, contrastes fortes e um ar urbano. Seu visual é marcante e à frente das tendências.',
+  palavras:['impactante','urbana','fashion','marcante'],cores:'Preto e branco, contrastes fortes, metálicos',
+  pecas:['Jaqueta de couro','Blazer de ombro marcado','Calça reta preta','Bota tratorada','Peça assimétrica','Acessórios geométricos de metal'],
+  dicas:['Preto e branco com uma peça statement é sua fórmula de sucesso.','Brinque com volumes: peça ampla em cima, justa embaixo (ou o contrário).','Uma terceira peça estruturada transforma qualquer básico.'],
+  evite:'Excesso de delicadeza (babados, florzinhas) que apaga o seu impacto.'}
+};
+const PERGUNTAS=[
+ {q:'Num sábado livre, você se sente melhor vestindo…',o:[['Jeans, camiseta e tênis confortáveis','natural'],['Calça bem cortada e uma camisa','classico'],['Algo simples, mas sofisticado','elegante'],['Um vestidinho leve e delicado','romantico'],['Algo que valorize as minhas curvas','sexy'],['Uma mistura diferente que ninguém mais usaria','criativo'],['Peças de corte marcante, com atitude','moderno']]},
+ {q:'Qual elogio você mais gostaria de ouvir?',o:[['“Você parece tão à vontade!”','natural'],['“Você está sempre impecável.”','classico'],['“Que chique!”','elegante'],['“Que delicada, que fofa!”','romantico'],['“Você está poderosa!”','sexy'],['“Que original!”','criativo'],['“Que estilosa, que impacto!”','moderno']]},
+ {q:'As cores que mais aparecem no seu armário são…',o:[['Terrosos, verdes, jeans','natural'],['Marinho, bege, branco e cinza','classico'],['Off-white, nude, preto — tudo bem sóbrio','elegante'],['Rosa, lilás e tons pastel','romantico'],['Vermelho, preto e vinho','sexy'],['Um pouco de tudo, quanto mais cor melhor','criativo'],['Preto e branco com contraste forte','moderno']]},
+ {q:'Sua estampa favorita é…',o:[['Xadrez ou estampas rústicas','natural'],['Listras simples','classico'],['Prefiro sempre liso','elegante'],['Floral, poá, coisas delicadas','romantico'],['Animal print','sexy'],['Étnica ou várias estampas misturadas','criativo'],['Geométrica ou gráfica','moderno']]},
+ {q:'O calçado que você mais usa…',o:[['Tênis ou rasteirinha','natural'],['Mocassim ou sapatilha','classico'],['Scarpin ou salto fino nude','elegante'],['Sapatilha com laço ou sandália delicada','romantico'],['Salto alto ou sandália de tiras alta','sexy'],['Algo diferente: colorido, bordado, inusitado','criativo'],['Bota tratorada ou sapato de design','moderno']]},
+ {q:'Com acessórios você é…',o:[['Quase nenhum — um relógio prático basta','natural'],['Pérolas, relógio clássico','classico'],['Poucos e de qualidade, dourado discreto','elegante'],['Laços, florzinhas, corações','romantico'],['Argolas grandes e um pouco de brilho','sexy'],['Maxi colares artesanais, vários misturados','criativo'],['Peças grandes, geométricas, de metal','moderno']]},
+ {q:'Os tecidos que você mais gosta de sentir no corpo…',o:[['Algodão, linho, malha','natural'],['Alfaiataria e tricô','classico'],['Seda, cetim, cashmere','elegante'],['Renda, chiffon, babados','romantico'],['Malhas que marcam, transparências, couro','sexy'],['Crochê, patchwork, texturas diferentes','criativo'],['Couro, neoprene, tecidos estruturados','moderno']]},
+ {q:'A modelagem que mais combina com você…',o:[['Soltinha e confortável','natural'],['Reta e na medida certa','classico'],['Fluida e alongada','elegante'],['Acinturada e rodada','romantico'],['Justa, com decote','sexy'],['Oversized, sobreposições inusitadas','criativo'],['Assimétrica, com ombros marcados','moderno']]},
+ {q:'Na hora de comprar, o que pesa mais?',o:[['Conforto e praticidade','natural'],['Durar anos sem sair de moda','classico'],['Qualidade e acabamento','elegante'],['Ser delicada e feminina','romantico'],['Me sentir atraente','sexy'],['Ser única, diferente de tudo','criativo'],['Estar à frente das tendências','moderno']]},
+ {q:'Cabelo e maquiagem do dia a dia…',o:[['Natural, quase nada','natural'],['Arrumado e discreto','classico'],['Impecável e polido','elegante'],['Suave, bochecha rosadinha','romantico'],['Boca vermelha ou olhar marcado','sexy'],['Mudo sempre, adoro brincar com cores','criativo'],['Delineado gráfico, corte marcante','moderno']]},
+ {q:'Se você fosse uma personagem, seria…',o:[['A viajante aventureira','natural'],['A executiva organizada','classico'],['A parisiense sofisticada','elegante'],['A mocinha de filme de época','romantico'],['A diva do tapete vermelho','sexy'],['A artista da feira de arte','criativo'],['A fashionista da semana de moda','moderno']]},
+ {q:'A peça que não pode faltar no seu armário…',o:[['Um jeans confortável','natural'],['Camisa branca ou trench coat','classico'],['Um blazer impecável','elegante'],['Um vestido floral','romantico'],['Um vestido justinho','sexy'],['Um kimono ou peça de brechó','criativo'],['Uma jaqueta de couro','moderno']]}
+];
+function iniciarTeste(){M.quiz={i:0,resp:[],ordem:PERGUNTAS.map(p=>p.o.map((_,k)=>k).sort(()=>Math.random()-.5))};M.tabAntes=M.tab==='teste'?'montar':M.tab;M.tab='teste';render();scrollTo(0,0)}
+function calcularPerfil(resp){
+  const pts=Object.fromEntries(Object.keys(PERFIS).map(k=>[k,0]));
+  resp.forEach(r=>{if(r)pts[r]++});
+  const ord=Object.entries(pts).sort((a,b)=>b[1]-a[1]);
+  const total=resp.filter(Boolean).length||1;
+  const principal=ord[0][0];
+  const secundario=ord[1][1]>0&&ord[1][1]>=Math.max(2,ord[0][1]*.5)?ord[1][0]:null;
+  return{principal,secundario,pts,total,data:hoje()};
+}
+function telaTeste(){
+  const Q=M.quiz;
+  if(!Q||Q.i>=PERGUNTAS.length)return telaResultado(S.cfg.perfil);
+  const p=PERGUNTAS[Q.i];const n=PERGUNTAS.length;
+  let h=`<div class="row" style="justify-content:space-between"><button class="btn sm" data-a="quizVoltar">‹ ${Q.i?'Voltar':'Sair'}</button><span class="small mut">${Q.i+1} de ${n}</span></div>
+  <div style="height:6px;background:var(--acc2);border-radius:9px;margin:14px 0 22px;overflow:hidden"><div style="height:100%;width:${Math.round(Q.i/n*100)}%;background:var(--acc);border-radius:9px;transition:width .3s"></div></div>
+  <h1 style="font-size:26px;line-height:1.2;margin-bottom:18px">${esc(p.q)}</h1>`;
+  h+=Q.ordem[Q.i].map(k=>{const[t,id]=p.o[k];return`<button class="slot quizop ${Q.resp[Q.i]===id?'sel':''}" data-a="quizResp" data-v="${id}" style="padding:15px 16px"><span class="grow" style="font-size:15.5px">${esc(t)}</span></button>`}).join('');
+  return h;
+}
+function telaResultado(pf){
+  if(!pf)return`<div class="empty"><button class="btn pri" data-a="quizIniciar">Fazer o teste de estilo</button></div>`;
+  const P=PERFIS[pf.principal],Sg=pf.secundario&&PERFIS[pf.secundario];
+  const pct=k=>Math.round(pf.pts[k]/pf.total*100);
+  const barras=Object.keys(PERFIS).filter(k=>pf.pts[k]>0).sort((a,b)=>pf.pts[b]-pf.pts[a]).map(k=>`<div class="row small" style="margin:5px 0"><span style="width:96px">${PERFIS[k].em} ${PERFIS[k].nome}</span><div class="grow" style="height:8px;background:var(--acc2);border-radius:9px;overflow:hidden"><div style="height:100%;width:${pct(k)}%;background:${k===pf.principal?'var(--acc)':'#c99a86'}"></div></div><span style="width:36px;text-align:right" class="mut">${pct(k)}%</span></div>`).join('');
+  const bloco=(X,tit)=>`<div class="card"><div class="lbl" style="margin-top:0">${tit}</div><h2 style="margin:0 0 4px">${X.em} ${X.nome}</h2><p style="margin:0 0 8px;font-style:italic" class="mut">${esc(X.frase)}</p><p style="margin:0 0 10px">${esc(X.desc)}</p><div>${X.palavras.map(w=>`<span class="tag">${esc(w)}</span>`).join('')}</div>
+   <div class="lbl">Suas cores</div><p style="margin:0">${esc(X.cores)}</p>
+   <div class="lbl">Peças-chave</div><ul style="margin:0;padding-left:18px">${X.pecas.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+   <div class="lbl">Dicas</div><ul class="why" style="margin:0">${X.dicas.map(x=>`<li class="p">${esc(x)}</li>`).join('')}</ul>
+   <div class="lbl">Cuidado com</div><p style="margin:0">${esc(X.evite)}</p></div>`;
+  let h=`<p class="sub" style="margin:0">Seu estilo pessoal</p><h1>Você é ${esc(P.nome)}${Sg?` com um toque ${esc(Sg.nome)}`:''} ${P.em}</h1><p class="sub">${esc(P.frase)}</p>`;
+  h+=`<div class="card"><div class="lbl" style="margin-top:0">Sua mistura de estilos</div>${barras}<p class="small mut" style="margin:10px 0 0">Ninguém é um estilo só — essa é a sua combinação. A partir de agora, os looks com a sua cara ganham destaque nas sugestões.</p></div>`;
+  h+=bloco(P,'Estilo principal');
+  if(Sg)h+=bloco(Sg,'Estilo secundário');
+  h+=`<div class="row wrap" style="margin-top:6px"><button class="btn pri" data-a="tab" data-v="montar">✨ Ver looks com a minha cara</button><button class="btn" data-a="quizIniciar">Refazer o teste</button></div>`;
+  return h;
+}
+/* o look tem a cara do estilo pessoal? */
+function combinaComPerfil(pcs,id){
+  const fps=pcs.filter(p=>p.tipo!=='acessorio');if(fps.length<2)return false;
+  const ci=fps.map(corInfo),viv=ci.filter(c=>!c.neutro);
+  const fam=[];for(const c of viv)if(!fam.some(h=>hueDist(h,c.h)<=22))fam.push(c.h);
+  const avg=fps.reduce((a,p)=>a+(+p.formal||3),0)/fps.length;
+  const est=pcs.some(p=>p.padrao==='estampa');
+  const temNome=re=>ci.some(c=>re.test(c.nome));
+  const tem=t=>pcs.some(p=>p.tipo===t);
+  switch(id){
+    case'natural':return avg<=2.6&&!temNome(/pink|vermelho|prata|roxo|royal/)&&(viv.every(c=>c.s<.6)||!viv.length);
+    case'classico':return avg>=2.5&&avg<=4.2&&fam.length<=1&&!pcs.some(p=>p.padrao==='estampa'&&!corInfo(p).neutro);
+    case'elegante':return avg>=3.5&&fam.length<=1&&!est;
+    case'romantico':return viv.some(c=>c.l>=.7||/rosa|lil|coral|vinho/.test(c.nome))||(tem('inteira')&&est)||temNome(/rosa|lil/);
+    case'sexy':return temNome(/vermelho|vinho|pink/)&&avg>=2.5||(tem('inteira')&&avg>=3.5&&temNome(/preto/));
+    case'criativo':return fam.length>=2||(est&&viv.length>=1);
+    case'moderno':{const ls=ci.map(c=>c.l);return(Math.max(...ls)-Math.min(...ls)>=.6&&viv.length<=1)||(temNome(/preto/)&&tem('terceira')&&avg>=3)}
+  }
+  return false;
+}
 
 /* ================= PERSISTÊNCIA ================= */
 function salvarLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
@@ -428,7 +548,7 @@ function _render(){
   if(!M.estacao)M.estacao=S.cfg.estacaoAuto===false&&S.cfg.ultimaEstacao?S.cfg.ultimaEstacao:estacaoAtual();
   if(!M.estilo||!estiloPorId(M.estilo))M.estilo=S.cfg.ultimoEstilo&&estiloPorId(S.cfg.ultimoEstilo)?S.cfg.ultimoEstilo:'casual';
   const t=M.tab;
-  app.innerHTML=t==='montar'?telaMontar():t==='armario'?telaArmario():t==='looks'?telaLooks():telaAjustes();
+  app.innerHTML=t==='teste'?telaTeste():t==='montar'?telaMontar():t==='armario'?telaArmario():t==='looks'?telaLooks():telaAjustes();
   renderNav();
 }
 function renderNav(){
@@ -447,6 +567,9 @@ function telaMontar(){
   if(!S.pecas.length){
     return h+`<div class="card empty" style="margin-top:18px"><div class="big">🚪</div><h2 style="margin-top:6px">Seu armário está vazio</h2><p class="mut">Cadastre suas peças (com foto, se quiser) e eu monto looks que combinam de verdade — por cor, estilo, estação e nível de arrumação.</p><div class="row wrap" style="justify-content:center;margin-top:12px"><button class="btn pri" data-a="nova">+ Cadastrar peça</button><button class="btn" data-a="exemplos">Testar com peças de exemplo</button></div></div>`;
   }
+  const pf=S.cfg.perfil;
+  h+=pf?`<button class="chip" data-a="verPerfil" style="margin-top:10px">Seu estilo: ${PERFIS[pf.principal].em} ${PERFIS[pf.principal].nome}${pf.secundario?' + '+PERFIS[pf.secundario].nome:''} ›</button>`
+   :`<button class="card" data-a="quizIniciar" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin:14px 0 0;background:var(--acc2);border-color:transparent"><span style="font-size:30px">🪞</span><span class="grow"><b>Descubra seu estilo pessoal</b><div class="small mut">12 perguntas rápidas — e os looks passam a ter a sua cara</div></span><span>›</span></button>`;
   h+=chipsContexto();
   h+=`<div class="seg"><button class="${M.modo==='sugestoes'?'on':''}" data-a="modo" data-v="sugestoes">✨ Me dê opções</button><button class="${M.modo==='manual'?'on':''}" data-a="modo" data-v="manual">✋ Eu escolho</button></div>`;
   return h+(M.modo==='sugestoes'?blocoSugestoes():blocoManual());
@@ -523,12 +646,14 @@ function telaAjustes(){
   h+=`<div class="card"><div class="status"><i class="${st[0]}"></i>${esc(st[1])}</div>${nuvem==='ok'&&!ASSETS?'<p class="small mut" style="margin:8px 0 0">As fotos ficam guardadas só neste aparelho.</p>':''}</div>`;
   h+=`<h2>Estação</h2><div class="card"><button class="toggle" data-a="estAuto" style="width:100%;text-align:left"><span class="sw ${S.cfg.estacaoAuto!==false?'on':''}"></span><span class="grow">Escolher a estação pelo calendário<div class="small mut">Agora: ${estacaoPorId(estacaoAtual()).em} ${estacaoPorId(estacaoAtual()).nome} (hemisfério sul)</div></span></button></div>`;
   h+=`<h2>Estilos</h2><div class="card">`+estilos().map(e=>{const extra=!ESTILOS_BASE.find(b=>b.id===e.id);return`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span style="width:26px">${esc(e.em||'•')}</span><span class="grow">${esc(e.nome)}<div class="small mut">de ${FORMAL[e.min].toLowerCase()} a ${FORMAL[e.max].toLowerCase()}</div></span>${extra?`<button class="btn sm danger" data-a="apagarEstilo" data-v="${e.id}">Remover</button>`:''}</div>`}).join('')+`<button class="btn sm" style="margin-top:12px" data-a="novoEstilo">+ Criar meu estilo</button></div>`;
+  {const pf=S.cfg.perfil;h+=`<h2>Meu estilo pessoal</h2><div class="card">${pf?`<div class="row"><span style="font-size:28px">${PERFIS[pf.principal].em}</span><span class="grow"><b>${PERFIS[pf.principal].nome}</b>${pf.secundario?` com toque ${PERFIS[pf.secundario].nome.toLowerCase()}`:''}<div class="small mut">teste feito em ${fmtData(pf.data)}</div></span></div><div class="row wrap" style="margin-top:10px"><button class="btn sm" data-a="verPerfil">Ver resultado</button><button class="btn sm" data-a="quizIniciar">Refazer teste</button></div>`:`<p class="small mut" style="margin-top:0">Responda 12 perguntas e descubra seu estilo. Os looks com a sua cara ganham destaque.</p><button class="btn sm pri" data-a="quizIniciar">Fazer o teste</button>`}</div>`}
   h+=`<h2>Como o app decide se combina</h2><div class="card explica">
    <p><b>🎨 Cores.</b> Neutros (preto, branco, bege, jeans, caramelo, marinho, dourado…) vão com tudo. Entre cores, aceito tom sobre tom, cores vizinhas (ex.: rosa + vinho) e complementares (ex.: azul + laranja). No máximo 3 famílias de cor; cores que brigam são descartadas.</p>
    <p><b>🌀 Estampas.</b> Só uma estampa por look — ela é a protagonista.</p>
    <p><b>👔 Nível de arrumação.</b> As peças precisam estar no mesmo nível (de “bem à vontade” a “gala”). Um chinelo com blazer de alfaiataria não passa.</p>
    <p><b>🌦️ Estação.</b> No inverno peço uma terceira peça ou algo quente; no verão evito peças pesadas.</p>
    <p><b>✨ Acabamento.</b> Ganha ponto quando o calçado ou a bolsa repete uma cor da roupa, e quando calçado e bolsa conversam.</p>
+   <p><b>🪞 Seu estilo.</b> Se você fez o teste de estilo, os looks com a sua cara ganham pontos extras.</p>
    <p><b>🔁 Variedade.</b> Peças usadas nos últimos 2 dias perdem ponto, para você não repetir.</p></div>`;
   h+=`<h2>Backup</h2><div class="card"><p class="small mut" style="margin-top:0">Cópia de segurança do armário (com as fotos), dos looks e do histórico. Guarde no Drive ou mande para o seu e-mail.</p><div class="row wrap">${PODE_BAIXAR?'<button class="btn sm pri" data-a="baixarBackup">Baixar backup</button>':''}<button class="btn sm" data-a="copiarBackup">Copiar backup</button><label class="btn sm">Importar arquivo<input type="file" accept=".json,application/json,text/plain" hidden data-in="importar"></label><button class="btn sm" data-a="colarBackup">Colar backup</button></div></div>`;
   h+=`<div style="margin-top:22px"><button class="btn sm danger" data-a="apagarTudo">Apagar todo o armário</button></div>`;
@@ -689,6 +814,10 @@ document.addEventListener('click',async e=>{
   const c=ctx();
   switch(a){
     case'fechar':fechar();break;
+    case'quizIniciar':iniciarTeste();break;
+    case'verPerfil':M.quiz=null;M.tab='teste';render();scrollTo(0,0);break;
+    case'quizVoltar':if(M.quiz.i>0){M.quiz.i--;render()}else{M.quiz=null;M.tab=M.tabAntes||'montar';render()}break;
+    case'quizResp':{const Q=M.quiz;Q.resp[Q.i]=v;b.classList.add('sel');setTimeout(()=>{Q.i++;if(Q.i>=PERGUNTAS.length){S.cfg.perfil=calcularPerfil(Q.resp);putMeta();M.sug=null;M.quiz=null}render();scrollTo(0,0)},180);break}
     case'tab':M.tab=v;render();scrollTo(0,0);break;
     case'estacao':M.estacao=v;M.sug=null;M.evitar.clear();S.cfg.ultimaEstacao=v;salvarLocal();render();break;
     case'estilo':M.estilo=v;M.sug=null;M.evitar.clear();S.cfg.ultimoEstilo=v;salvarLocal();render();break;
